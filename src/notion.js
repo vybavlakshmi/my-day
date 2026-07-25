@@ -10,23 +10,30 @@ function plainText(richTextArray) {
   return (richTextArray || []).map(t => t.plain_text).join('');
 }
 
-// Reads the first `limit` unchecked checkbox lines from the Open Tasks — Brain Dump page.
+// Reads the first `limit` unchecked checkboxes from the Open Tasks — Brain Dump page,
+// walking into nested/toggled blocks (e.g. collapsible headings) since to-dos often live there.
 async function getOpenTasks(limit = 3) {
   const tasks = [];
-  let cursor;
-  do {
-    const res = await notion.blocks.children.list({
-      block_id: OPEN_TASKS_PAGE_ID,
-      start_cursor: cursor,
-    });
-    for (const block of res.results) {
-      if (block.type === 'to_do' && !block.to_do.checked) {
-        tasks.push({ id: block.id, title: plainText(block.to_do.rich_text), done: false });
-        if (tasks.length >= limit) return tasks;
+
+  async function walk(blockId) {
+    let cursor;
+    do {
+      const res = await notion.blocks.children.list({ block_id: blockId, start_cursor: cursor });
+      for (const block of res.results) {
+        if (block.type === 'to_do' && !block.to_do.checked) {
+          tasks.push({ id: block.id, title: plainText(block.to_do.rich_text), done: false });
+        }
+        if (tasks.length >= limit) return;
+        if (block.has_children) {
+          await walk(block.id);
+          if (tasks.length >= limit) return;
+        }
       }
-    }
-    cursor = res.has_more ? res.next_cursor : undefined;
-  } while (cursor);
+      cursor = res.has_more ? res.next_cursor : undefined;
+    } while (cursor && tasks.length < limit);
+  }
+
+  await walk(OPEN_TASKS_PAGE_ID);
   return tasks;
 }
 
