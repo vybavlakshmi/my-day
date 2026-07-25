@@ -2,7 +2,7 @@
   "name": "my-day-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal Operations System — Manager backend (Groq + Notion + Emma).",
+  "description": "Personal Operations System — Manager backend (Groq + Notion + Maya).",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js"

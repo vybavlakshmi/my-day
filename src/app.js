@@ -6,7 +6,7 @@ const express = require('express');
 const healthRouter = require('./health');
 const cadence = require('./cadence');
 const notion = require('./notion');
-const emma = require('./emma');
+const maya = require('./maya');
 
 const app = express();
 app.use(express.json());
@@ -46,7 +46,7 @@ app.post('/task/toggle', async (req, res) => {
 app.post('/speak', async (req, res) => {
   try {
     const { text, voice } = req.body;
-    const audioStream = await emma.speak(text, voice);
+    const audioStream = await maya.speak(text, voice);
     res.set('Content-Type', 'audio/webm');
     audioStream.pipe(res);
   } catch (err) {

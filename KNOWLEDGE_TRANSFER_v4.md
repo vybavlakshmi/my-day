@@ -22,7 +22,7 @@
 - **Google Calendar uses a refresh-token OAuth flow**, not the single `GOOGLE_ACCESS_TOKEN` v3 mentioned — access tokens expire hourly, useless for an always-on server. Env vars are `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `GOOGLE_REFRESH_TOKEN`, `GOOGLE_CALENDAR_ID`.
 - The Google Cloud OAuth consent screen must be **Published** (not left in "Testing"), or the refresh token expires every 7 days. "Unverified app" warning is expected and fine to click through for personal use.
 - `groq.js` has a **third function**, `chatReply(text, tasksSummary)`, beyond v3's original two (`judgeExcuse`, `weeklyReview`) — added so `/chat` can answer plain questions ("what's left today?") without forcing everything through excuse-judgment.
-- **The full cadence/cron engine from v3 §4 is NOT built** (night brief, abandonment nudges, 9am check, Sunday weekly review, observe mode). Per v3's own MVP line ("everything else is backlog"), only `/tasks`, `/chat`, Emma speaking, and `/task/toggle` Notion sync were built. `node-cron` was removed from `package.json` since nothing uses it yet.
+- **The full cadence/cron engine from v3 §4 is NOT built** (night brief, abandonment nudges, 9am check, Sunday weekly review, observe mode). Per v3's own MVP line ("everything else is backlog"), only `/tasks`, `/chat`, Maya speaking, and `/task/toggle` Notion sync were built. `node-cron` was removed from `package.json` since nothing uses it yet.
 - **"Day to day tasks" (protected) is a hardcoded static list** for now: Health block, Caregiver check-in, CAV — one post, Mental health / wind-down. No morning-resync automation.
 - **`/chat` routing logic (in `cadence.js`):** if the message mentions a real task title AND contains excuse-flavored words (sorry, missed, forgot, busy, didn't, etc.) → goes through `judgeExcuse`, gets logged to Excuse Ledger + Task Log. Otherwise → goes through `chatReply` for a plain conversational answer, nothing logged. This is simple keyword matching, not full NLU.
 - `getAllTasks()` uses `Promise.allSettled`, not `Promise.all` — if Google Calendar isn't connected or fails, Notion + protected cards still load; Calendar card just shows "Nothing scheduled."
@@ -36,7 +36,7 @@
 - `src/groq.js` — `judgeExcuse(task, excuse, ledger)`, `weeklyReview(log)`, `chatReply(text, tasksSummary)`. Model: `llama-3.3-70b-versatile`.
 - `src/notion.js` — `getOpenTasks(3)`, `markTaskDone(blockId, done)`, `logExcuse()`, `getLedgerSummary()`, `logTaskEvent()`
 - `src/calendar.js` — `getTodayEvents()`, OAuth2 refresh-token flow, today only, Asia/Kolkata
-- `src/emma.js` — `speak(text, voice)` via `msedge-tts`, `en-US-EmmaNeural` default / `en-US-JennyNeural` toggle, streams webm/opus audio, no files saved to disk
+- `src/maya.js` (was `emma.js` — renamed when the assistant's persona was renamed Emma → Maya) — `speak(text, voice)` via `msedge-tts`. Voice model is still Microsoft's `en-US-EmmaNeural` (their name, can't be renamed) / `en-US-JennyNeural` toggle, streams webm/opus audio, no files saved to disk
 - `src/cadence.js` — `getAllTasks()`, `handleChat(text)` — the manager brain tying groq/notion/calendar together
 - `src/server.js` — Express entry: serves `public/`, mounts `/health`, `GET /tasks`, `POST /chat`, `POST /task/toggle`, `POST /speak`
 - `public/index.html` — moved from project root; now fetches real `/tasks` on load, POSTs task toggles (Notion source only), POSTs `/chat` then `/speak` and plays real audio, polls `/health` every 60s
@@ -75,7 +75,7 @@ GOOGLE_CALENDAR_ID=primary
 2. Deploy to Replit: create a Node.js Repl, import everything under `myday/` (skip `node_modules` — Replit installs fresh), add all §3 secrets as Replit Secrets, run `npm install` then `npm start`.
 3. **cron-job.org** → GET `https://<your-repl-url>/health` every 5 min (keep-alive so Replit's free tier doesn't sleep).
 4. **UptimeRobot** → dead-man's switch, alert if `/health` goes silent for 24h.
-5. Live test: dashboard loads real tasks → type a message → Groq replies → Emma speaks → tick a "From Notion" task → confirm the real Notion checkbox ticked.
+5. Live test: dashboard loads real tasks → type a message → Groq replies → Maya speaks → tick a "From Notion" task → confirm the real Notion checkbox ticked.
 
 ---
 

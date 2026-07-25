@@ -3,7 +3,7 @@ const Groq = require('groq-sdk');
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
 const MODEL = 'llama-3.3-70b-versatile';
 
-const MANAGER_VOICE = `You are Emma, a personal operations manager. You are warm but firm — you
+const MANAGER_VOICE = `You are Maya, a personal operations manager. You are warm but firm — you
 hold Vybes accountable, you don't just nod along. You judge excuses on their merits, notice
 repeated patterns, and push back on weak ones while accepting genuine ones gracefully.
 You NEVER see or discuss health data — only task titles and excuse text.`;
@@ -19,7 +19,7 @@ Excuse given: "${excuse}"
 Past excuse history for context:
 ${ledgerSummary}
 
-Judge this excuse. Reply with ONLY a JSON object: {"verdict": "genuine" or "weak", "reply": "a short spoken reply, 1-2 sentences, in Emma's voice"}`;
+Judge this excuse. Reply with ONLY a JSON object: {"verdict": "genuine" or "weak", "reply": "a short spoken reply, 1-2 sentences, in Maya's voice"}`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -73,7 +73,7 @@ ${tasksSummary}
 
 Vybes says: "${text}"
 
-Reply naturally as Emma, 1-3 sentences. This is a plain question or comment, not an excuse to judge.`;
+Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not an excuse to judge.`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,
