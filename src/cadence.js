@@ -17,6 +17,9 @@ async function getAllTasks() {
   if (calendarResult.status === 'rejected') {
     console.error('Calendar fetch failed:', calendarResult.reason.message);
   }
+  if (notionResult.status === 'rejected') {
+    console.error('Notion fetch failed:', notionResult.reason.message);
+  }
   const protectedTasks = PROTECTED_TASKS.map(title => ({ title, done: false }));
   return {
     protected: protectedTasks,
