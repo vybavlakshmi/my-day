@@ -1,0 +1,9 @@
+{
+  "rewrites": [
+    { "source": "/health", "destination": "/api/index" },
+    { "source": "/tasks", "destination": "/api/index" },
+    { "source": "/chat", "destination": "/api/index" },
+    { "source": "/task/toggle", "destination": "/api/index" },
+    { "source": "/speak", "destination": "/api/index" }
+  ]
+}

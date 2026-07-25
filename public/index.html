@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Day</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Poppins:wght@400;500;600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --blue-1: #1E7FFF; --blue-2: #7EB8FF;
+    --ink: #1C2B36; --soft: #8FA3B0; --line: #EAF0F5; --bg: #FFFFFF; --radius: 20px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Poppins', sans-serif; background: var(--bg); color: var(--ink);
+    display: flex; justify-content: center; -webkit-font-smoothing: antialiased;
+  }
+  .phone {
+    width: 100%; max-width: 440px; min-height: 100vh; position: relative;
+    display: flex; flex-direction: column; padding: 22px 22px 320px;
+  }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .topbar .spacer { width: 30px; height: 30px; }
+  .topbar .title { font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: 2px; font-size: 14px; }
+
+  .pill {
+    align-self: center; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border-radius: 999px; background: #F3F8FF; color: var(--blue-1);
+    font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 0.3px;
+  }
+  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-1); animation: livepulse 2s infinite; }
+  .pill.offline { background: #FDF3F3; color: #C0564C; }
+  .pill.offline .dot { background: #C0564C; animation: none; }
+  @keyframes livepulse {
+    0% { box-shadow: 0 0 0 0 rgba(30,127,255,0.45); }
+    70% { box-shadow: 0 0 0 7px rgba(30,127,255,0); }
+    100% { box-shadow: 0 0 0 0 rgba(30,127,255,0); }
+  }
+
+  .greeting { text-align: center; margin-top: 46px; }
+  .greeting .today {
+    font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px;
+    letter-spacing: 1.5px; text-transform: uppercase; color: var(--blue-1); margin-bottom: 10px;
+  }
+  .greeting h1 { font-family: 'Inter', sans-serif; font-weight: 700; font-size: 27px; letter-spacing: -0.4px; }
+  .greeting h1 .accent { color: var(--blue-1); }
+  .greeting p { margin-top: 8px; color: #C3CFD8; font-weight: 500; font-size: 18px; }
+
+  .cards { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .card {
+    border: 1.5px solid var(--line); border-radius: var(--radius); padding: 16px 18px;
+    background: #fff; transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+  .card:hover { transform: translateY(-2px); box-shadow: 0 10px 24px -18px rgba(28,43,54,0.4); }
+  .card .card-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+  .card .card-title { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 14px; }
+  .source-tag {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 500; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--soft); border: 1px dashed #CDD9E1; border-radius: 999px; padding: 3px 9px;
+  }
+  .task { display: flex; align-items: center; gap: 11px; padding: 7px 0; font-size: 14px; color: #405260; cursor: pointer; user-select: none; }
+  .task + .task { border-top: 1px solid #F4F8FB; }
+  .task .tick { width: 17px; height: 17px; border: 1.6px solid #CBD8E1; border-radius: 6px; flex-shrink: 0; }
+  .task.done .tick { background: var(--blue-1); border-color: var(--blue-1); position: relative; }
+  .task.done .tick::after {
+    content: ""; position: absolute; left: 5px; top: 2px; width: 4px; height: 8px;
+    border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
+  }
+  .task.done span { color: #A9B7C1; text-decoration: line-through; }
+  .empty { color: var(--soft); font-size: 13px; padding: 4px 0; }
+
+  .hero-wrap {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 440px; height: 260px; pointer-events: none;
+    display: flex; justify-content: center; align-items: flex-end; overflow: hidden; z-index: 1;
+  }
+  .semi {
+    width: 300px; height: 300px; border-radius: 50%;
+    background: linear-gradient(180deg, var(--blue-1) 0%, var(--blue-2) 100%);
+    position: relative; transform: translateY(50%); transition: transform 0.4s ease;
+  }
+  .semi::before, .semi::after { content: ""; position: absolute; border-radius: 50%; border: 1.5px solid rgba(255,255,255,0.22); }
+  .semi::before { inset: 34px; }
+  .semi::after { inset: 74px; border-color: rgba(255,255,255,0.16); }
+  .semi.speaking { animation: breathe 2.6s ease-in-out infinite; }
+  @keyframes breathe {
+    0%,100% { transform: translateY(50%) scale(1); }
+    50% { transform: translateY(50%) scale(1.045); }
+  }
+  .ripple {
+    position: absolute; left: 50%; top: 0; width: 300px; height: 300px;
+    border-radius: 50%; border: 2px solid var(--blue-1); transform: translate(-50%, 0); opacity: 0;
+  }
+  .semi.speaking ~ .ripple { animation: ripple 2.4s ease-out infinite; }
+  .semi.speaking ~ .ripple.r2 { animation-delay: 1.2s; }
+  @keyframes ripple {
+    0% { transform: translate(-50%, 50%) scale(0.9); opacity: 0.5; }
+    100% { transform: translate(-50%, 20%) scale(1.4); opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) { .semi.speaking, .semi.speaking ~ .ripple { animation: none; } }
+
+  .dock {
+    position: fixed; bottom: 22px; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 440px; padding: 0 22px; display: flex; align-items: center; gap: 12px; z-index: 3;
+  }
+  .home-btn {
+    width: 46px; height: 46px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+    color: var(--blue-1); background: transparent; border: none; cursor: pointer;
+  }
+  .inputbar {
+    flex: 1; display: flex; align-items: center; gap: 10px; background: #fff; border-radius: 999px;
+    padding: 12px 18px; box-shadow: 0 8px 30px -10px rgba(28,43,54,0.22); border: 1px solid #EEF3F7;
+  }
+  .inputbar input { border: none; outline: none; flex: 1; font-family: 'Poppins', sans-serif; font-size: 14px; color: var(--ink); background: transparent; }
+  .inputbar input::placeholder { color: #AEBCC6; }
+  .inputbar .spark { color: var(--blue-1); display: flex; cursor: pointer; }
+  .demo {
+    position: fixed; top: 18px; right: 18px; z-index: 5; font-family: 'Inter', sans-serif;
+    font-size: 11px; font-weight: 600; color: var(--blue-1); background: #F3F8FF; border: none;
+    border-radius: 999px; padding: 7px 13px; cursor: pointer;
+  }
+</style>
+</head>
+<body>
+  <div class="phone">
+    <button class="demo" id="demoBtn">▶ Preview Emma</button>
+
+    <div class="topbar">
+      <div class="spacer"></div>
+      <div class="title">MY DAY</div>
+      <div class="spacer"></div>
+    </div>
+
+    <div class="pill" id="healthPill">
+      <span class="dot"></span><span id="healthText">Manager online</span>
+    </div>
+
+    <div class="greeting">
+      <div class="today" id="todayLine">SUNDAY, 5 JULY</div>
+      <h1 id="greetText">Good morning, Vybes<span class="accent">.</span></h1>
+      <p id="greetSub">Here's what's on your plate.</p>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="card-head"><div class="card-title">Day to day tasks</div><div class="source-tag">daily</div></div>
+        <div id="protectedList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">From Notion</div><div class="source-tag">brain dump</div></div>
+        <div id="notionList"></div>
+      </div>
+      <div class="card">
+        <div class="card-head"><div class="card-title">Calendar</div><div class="source-tag">today</div></div>
+        <div id="calendarList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="hero-wrap">
+    <div class="semi" id="semi"></div>
+    <div class="ripple r1"></div>
+    <div class="ripple r2"></div>
+  </div>
+
+  <div class="dock">
+    <button class="home-btn" id="homeBtn" title="Back to top">
+      <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 19V5"/><path d="M5 12l7-7 7 7"/></svg>
+    </button>
+    <div class="inputbar">
+      <input id="msgInput" type="text" placeholder="Tell me an excuse, or ask…" />
+      <div class="spark" id="sparkBtn" title="Send">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3v3M12 18v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M3 12h3M18 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/></svg>
+      </div>
+    </div>
+  </div>
+
+<script>
+  (function () {
+    const now = new Date();
+    const days = ["SUNDAY","MONDAY","TUESDAY","WEDNESDAY","THURSDAY","FRIDAY","SATURDAY"];
+    const months = ["JANUARY","FEBRUARY","MARCH","APRIL","MAY","JUNE","JULY","AUGUST","SEPTEMBER","OCTOBER","NOVEMBER","DECEMBER"];
+    document.getElementById("todayLine").textContent = days[now.getDay()] + ", " + now.getDate() + " " + months[now.getMonth()];
+    const h = now.getHours();
+    let g = "Good morning";
+    if (h >= 12 && h < 17) g = "Good afternoon";
+    else if (h >= 17 || h < 4) g = "Good evening";
+    document.getElementById("greetText").innerHTML = g + ', Vybes<span class="accent">.</span>';
+  })();
+
+  function renderList(elId, items, source) {
+    const box = document.getElementById(elId);
+    if (!items || !items.length) { box.innerHTML = '<div class="empty">Nothing scheduled.</div>'; return; }
+    box.innerHTML = items.map((t, i) => `
+      <div class="task ${t.done ? 'done' : ''}" data-source="${source}" data-id="${t.id != null ? t.id : i}">
+        <span class="tick"></span><span>${t.title}</span>
+      </div>`).join("");
+  }
+
+  function attachTaskHandlers() {
+    document.querySelectorAll(".task").forEach(t => {
+      t.addEventListener("click", async () => {
+        const nowDone = !t.classList.contains("done");
+        t.classList.toggle("done");
+        if (t.dataset.source === "notion") {
+          try {
+            await fetch("/task/toggle", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ source: "notion", id: t.dataset.id, done: nowDone }),
+            });
+          } catch {
+            // visual toggle already happened; next /tasks refresh will re-sync if this failed
+          }
+        }
+      });
+    });
+  }
+
+  async function loadTasks() {
+    try {
+      const res = await fetch("/tasks");
+      const data = await res.json();
+      renderList("protectedList", data.protected, "protected");
+      renderList("notionList", data.notion, "notion");
+      renderList("calendarList", data.calendar, "calendar");
+    } catch {
+      renderList("protectedList", [], "protected");
+      renderList("notionList", [], "notion");
+      renderList("calendarList", [], "calendar");
+    }
+    attachTaskHandlers();
+  }
+  loadTasks();
+
+  async function checkHealth() {
+    const pill = document.getElementById("healthPill"), txt = document.getElementById("healthText");
+    try { const r = await fetch("/health",{cache:"no-store"}); if(!r.ok) throw 0;
+      pill.classList.remove("offline"); txt.textContent="Manager online";
+    } catch { pill.classList.add("offline"); txt.textContent="Manager offline"; }
+  }
+  checkHealth();
+  setInterval(checkHealth, 60000);
+
+  const semi = document.getElementById("semi");
+  let speakTimer = null;
+  function startSpeaking(ms = 4200) {
+    semi.classList.add("speaking");
+    clearTimeout(speakTimer);
+    speakTimer = setTimeout(() => semi.classList.remove("speaking"), ms);
+  }
+  document.getElementById("demoBtn").addEventListener("click", () => startSpeaking(4200));
+
+  async function handleSend() {
+    const input = document.getElementById("msgInput");
+    const text = input.value.trim();
+    if (!text) return;
+    input.value = "";
+    try {
+      const chatRes = await fetch("/chat", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text }),
+      });
+      const { reply } = await chatRes.json();
+
+      const speakRes = await fetch("/speak", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text: reply }),
+      });
+      const audioBlob = await speakRes.blob();
+      const audio = new Audio(URL.createObjectURL(audioBlob));
+      audio.addEventListener("loadedmetadata", () => startSpeaking((audio.duration || 4) * 1000));
+      audio.addEventListener("ended", () => semi.classList.remove("speaking"));
+      audio.play();
+
+      loadTasks(); // an excuse may have changed task state
+    } catch {
+      startSpeaking(3500);
+    }
+  }
+  document.getElementById("sparkBtn").addEventListener("click", handleSend);
+  document.getElementById("msgInput").addEventListener("keydown", e => { if (e.key === "Enter") handleSend(); });
+  document.getElementById("homeBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
+</script>
+</body>
+</html>
