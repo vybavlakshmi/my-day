@@ -8,6 +8,7 @@ const TASK_LOG_DB = process.env.TASK_LOG_DB;
 const ACTIVE_COMMITMENT_DB = process.env.ACTIVE_COMMITMENT_DB;
 const PARKED_THREADS_DB = process.env.PARKED_THREADS_DB;
 const COMMITMENT_HISTORY_DB = process.env.COMMITMENT_HISTORY_DB;
+const ITEM_REGISTRY_DB = process.env.ITEM_REGISTRY_DB;
 
 function plainText(richTextArray) {
   return (richTextArray || []).map(t => t.plain_text).join('');
@@ -164,6 +165,19 @@ async function closeCommitment(text, started, outcome) {
   await notion.pages.create({ parent: { database_id: COMMITMENT_HISTORY_DB }, properties });
 }
 
+// The full master list of recurring intentions, as tagged by Vybes (class/cadence/window_fit).
+// Selecting 1-2 for the current window is the Timing Engine's job, not this function's.
+async function getItemRegistry() {
+  const res = await notion.databases.query({ database_id: ITEM_REGISTRY_DB, page_size: 100 });
+  return res.results.map(page => ({
+    id: page.id,
+    title: plainText(page.properties.Title.title),
+    class: page.properties.Class.select ? page.properties.Class.select.name : null,
+    cadence: page.properties.Cadence.select ? page.properties.Cadence.select.name : null,
+    windowFit: page.properties['Window Fit'].select ? page.properties['Window Fit'].select.name : null,
+  }));
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -177,4 +191,5 @@ module.exports = {
   getParkedThreads,
   updateParkedThreadStatus,
   closeCommitment,
+  getItemRegistry,
 };
