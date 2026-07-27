@@ -87,4 +87,51 @@ Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not
   return completion.choices[0].message.content.trim();
 }
 
-module.exports = { judgeExcuse, weeklyReview, chatReply };
+const COMMITMENT_INTENTS = ['new_commitment', 'continuation', 'drift', 'conscious_switch', 'completion', 'other'];
+
+// The Commitment-Keeper core: classifies what an incoming message means for the
+// current active commitment, and drafts Maya's reply in the same call.
+async function classifyCommitment(activeCommitment, message) {
+  const contextLine = activeCommitment
+    ? `Current active commitment: "${activeCommitment.commitment}" (started ${activeCommitment.started || 'recently'}).`
+    : 'No active commitment right now.';
+
+  const prompt = `${contextLine}
+
+Vybes just said: "${message}"
+
+Classify this message as exactly one of:
+- "new_commitment": there is no active commitment, and this states a fresh intent to commit to something
+- "continuation": this is about progressing or discussing the current active commitment, not a new topic
+- "drift": there IS an active commitment, and this introduces a different new task or idea (a tangent)
+- "conscious_switch": Vybes is explicitly saying the new thing should replace the current commitment right now (e.g. "actually let's do X instead", "no this is more important")
+- "completion": Vybes is saying the current active commitment is finished or done
+- "other": general question or comment, not related to starting, switching, or finishing a commitment
+
+Reply with ONLY a JSON object:
+{"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if intent is other", "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it."}`;
+
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: 'system', content: MANAGER_VOICE },
+      { role: 'user', content: prompt },
+    ],
+    response_format: { type: 'json_object' },
+    temperature: 0.6,
+  });
+
+  const raw = completion.choices[0].message.content;
+  try {
+    const parsed = JSON.parse(raw);
+    return {
+      intent: COMMITMENT_INTENTS.includes(parsed.intent) ? parsed.intent : 'other',
+      extracted: parsed.extracted || '',
+      reply: parsed.reply || raw,
+    };
+  } catch {
+    return { intent: 'other', extracted: '', reply: raw };
+  }
+}
+
+module.exports = { judgeExcuse, weeklyReview, chatReply, classifyCommitment };

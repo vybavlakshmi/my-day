@@ -50,6 +50,39 @@ function looksLikeExcuse(text) {
 }
 
 async function handleChat(text) {
+  const activeCommitment = await notion.getActiveCommitment();
+  const classification = await groq.classifyCommitment(activeCommitment, text);
+
+  switch (classification.intent) {
+    case 'new_commitment':
+      await notion.setActiveCommitment(classification.extracted || text);
+      return classification.reply;
+
+    case 'drift':
+      await notion.addParkedThread(classification.extracted || text);
+      return classification.reply;
+
+    case 'conscious_switch':
+      if (activeCommitment) {
+        await notion.addParkedThread(activeCommitment.commitment);
+      }
+      await notion.setActiveCommitment(classification.extracted || text);
+      return classification.reply;
+
+    case 'completion':
+      if (activeCommitment) {
+        await notion.closeCommitment(activeCommitment.commitment, activeCommitment.started, 'completed');
+        await notion.clearActiveCommitment();
+      }
+      return classification.reply;
+
+    case 'continuation':
+      return classification.reply;
+
+    default:
+      break; // 'other' falls through to the existing excuse/plain-chat logic below
+  }
+
   const tasks = await getAllTasks();
   const referenced = findReferencedTask(text, tasks);
 
