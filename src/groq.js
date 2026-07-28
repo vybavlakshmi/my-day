@@ -151,7 +151,7 @@ const DEFAULT_DAY_TEMPLATE = [
   { name: 'medicines_cab', start: '09:20', end: '09:30', windowFit: 'seated_screen' },
   { name: 'hospital_business', start: '09:30', end: '12:30', windowFit: 'seated_thinking' },
   { name: 'travel_home', start: '12:30', end: '13:00', windowFit: 'seated_screen' },
-  { name: 'feed_mom_laundry', start: '13:00', end: '13:30', windowFit: 'hands_busy_voice' },
+  { name: 'feed_mom_start_laundry', start: '13:00', end: '13:30', windowFit: 'hands_busy_voice' },
   { name: 'eat_lunch_medicines', start: '13:30', end: '13:55', windowFit: 'any' },
   { name: 'power_nap', start: '13:55', end: '14:25', windowFit: 'any' },
   { name: 'walk', start: '14:25', end: '14:55', windowFit: 'movement' },
