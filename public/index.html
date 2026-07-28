@@ -49,7 +49,24 @@
   .greeting h1 .accent { color: var(--blue-1); }
   .greeting p { margin-top: 8px; color: #C3CFD8; font-weight: 500; font-size: 18px; }
 
-  .cards { margin-top: 28px; display: flex; flex-direction: column; gap: 14px; }
+  .commit-strip {
+    margin-top: 24px; border-radius: var(--radius); padding: 14px 18px;
+    background: linear-gradient(135deg, #F3F8FF 0%, #EAF3FF 100%); border: 1.5px solid #E0EDFF;
+  }
+  .commit-strip .on-now-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.6px;
+    text-transform: uppercase; color: var(--blue-1); margin-bottom: 4px;
+  }
+  .commit-strip .on-now-text { font-family: 'Inter', sans-serif; font-weight: 600; font-size: 15px; color: var(--ink); }
+  .parked-row {
+    display: none; align-items: center; gap: 6px; margin-top: 10px; padding-top: 10px;
+    border-top: 1px dashed #D6E6FF; font-size: 12.5px; color: var(--blue-1); cursor: pointer; user-select: none;
+  }
+  .parked-list { display: none; margin-top: 8px; }
+  .parked-list .parked-item { font-size: 13px; color: #405260; padding: 4px 0; }
+  .parked-list.open { display: block; }
+
+  .cards { margin-top: 14px; display: flex; flex-direction: column; gap: 14px; }
   .card {
     border: 1.5px solid var(--line); border-radius: var(--radius); padding: 16px 18px;
     background: #fff; transition: transform 0.2s ease, box-shadow 0.2s ease;
@@ -70,6 +87,10 @@
     border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg);
   }
   .task.done span { color: #A9B7C1; text-decoration: line-through; }
+  .task .protected-flag {
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600; color: var(--blue-1);
+    background: #F3F8FF; border-radius: 999px; padding: 2px 7px; margin-left: auto; text-transform: uppercase;
+  }
   .empty { color: var(--soft); font-size: 13px; padding: 4px 0; }
 
   .hero-wrap {
@@ -130,7 +151,7 @@
 
     <div class="topbar">
       <div class="spacer"></div>
-      <div class="title">MY DAY</div>
+      <div class="title" id="topTitle">MY DAY</div>
       <div class="spacer"></div>
     </div>
 
@@ -144,18 +165,19 @@
       <p id="greetSub">Here's what's on your plate.</p>
     </div>
 
+    <div class="commit-strip">
+      <div class="on-now-label">On now</div>
+      <div class="on-now-text" id="onNowText">Nothing committed yet</div>
+      <div class="parked-row" id="parkedRow">
+        <span id="parkedCountText"></span>
+      </div>
+      <div class="parked-list" id="parkedList"></div>
+    </div>
+
     <div class="cards">
       <div class="card">
-        <div class="card-head"><div class="card-title">Day to day tasks</div><div class="source-tag">daily</div></div>
-        <div id="protectedList"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><div class="card-title">From Notion</div><div class="source-tag">brain dump</div></div>
-        <div id="notionList"></div>
-      </div>
-      <div class="card">
-        <div class="card-head"><div class="card-title">Calendar</div><div class="source-tag">today</div></div>
-        <div id="calendarList"></div>
+        <div class="card-head"><div class="card-title" id="focusTitle">Right now</div><div class="source-tag">focus</div></div>
+        <div id="focusList"></div>
       </div>
     </div>
   </div>
@@ -191,50 +213,87 @@
     document.getElementById("greetText").innerHTML = g + ', Vybes<span class="accent">.</span>';
   })();
 
-  function renderList(elId, items, source) {
-    const box = document.getElementById(elId);
-    if (!items || !items.length) { box.innerHTML = '<div class="empty">Nothing scheduled.</div>'; return; }
-    box.innerHTML = items.map((t, i) => `
-      <div class="task ${t.done ? 'done' : ''}" data-source="${source}" data-id="${t.id != null ? t.id : i}">
-        <span class="tick"></span><span>${t.title}</span>
-      </div>`).join("");
+  // ---- Commitment strip: active commitment + parked threads ----
+  let parkedOpen = false;
+
+  function renderStatus(data) {
+    document.getElementById("onNowText").textContent = data.activeCommitment || "Nothing committed yet";
+    if (data.milestone) {
+      document.getElementById("topTitle").textContent = data.milestone;
+    }
+    const row = document.getElementById("parkedRow");
+    if (data.parkedCount > 0) {
+      row.style.display = "flex";
+      const label = data.parkedCount === 1 ? "1 thread parked" : `${data.parkedCount} threads parked`;
+      document.getElementById("parkedCountText").textContent = `${label} — tap to see`;
+    } else {
+      row.style.display = "none";
+      document.getElementById("parkedList").classList.remove("open");
+      parkedOpen = false;
+    }
   }
 
-  function attachTaskHandlers() {
-    document.querySelectorAll(".task").forEach(t => {
-      t.addEventListener("click", async () => {
-        const nowDone = !t.classList.contains("done");
-        t.classList.toggle("done");
-        if (t.dataset.source === "notion") {
-          try {
-            await fetch("/task/toggle", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({ source: "notion", id: t.dataset.id, done: nowDone }),
-            });
-          } catch {
-            // visual toggle already happened; next /tasks refresh will re-sync if this failed
-          }
-        }
-      });
+  async function loadStatus() {
+    try {
+      const res = await fetch("/status");
+      renderStatus(await res.json());
+    } catch {
+      renderStatus({ activeCommitment: null, parkedCount: 0, milestone: null });
+    }
+  }
+
+  async function toggleParkedList() {
+    const list = document.getElementById("parkedList");
+    parkedOpen = !parkedOpen;
+    if (!parkedOpen) { list.classList.remove("open"); return; }
+    try {
+      const res = await fetch("/parked");
+      const { parked } = await res.json();
+      list.innerHTML = (parked || []).map(p => `<div class="parked-item">• ${p.thread}</div>`).join("") || '<div class="parked-item">Nothing parked.</div>';
+    } catch {
+      list.innerHTML = '<div class="parked-item">Couldn\'t load.</div>';
+    }
+    list.classList.add("open");
+  }
+  document.getElementById("parkedRow").addEventListener("click", toggleParkedList);
+
+  // ---- Adaptive focus surface: 1-2 Item Registry entries for the current window ----
+  function formatWindowName(name) {
+    if (!name) return "Right now";
+    return name.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+  }
+
+  function renderFocus(windowName, items) {
+    document.getElementById("focusTitle").textContent = formatWindowName(windowName);
+    const box = document.getElementById("focusList");
+    if (!items || !items.length) {
+      box.innerHTML = '<div class="empty">Nothing specific queued right now.</div>';
+      return;
+    }
+    box.innerHTML = items.map(it => `
+      <div class="task">
+        <span class="tick"></span><span>${it.title}</span>
+        ${it.class === "Protected" ? '<span class="protected-flag">protected</span>' : ""}
+      </div>`).join("");
+    // Visual toggle only — no persistence yet, see NOTES.md (§4's "already done" dedup
+    // is the same underlying gap: no completion-tracking exists for registry items).
+    document.querySelectorAll("#focusList .task").forEach(t => {
+      t.addEventListener("click", () => t.classList.toggle("done"));
     });
   }
 
-  async function loadTasks() {
+  async function loadFocus() {
     try {
-      const res = await fetch("/tasks");
+      const res = await fetch("/focus");
       const data = await res.json();
-      renderList("protectedList", data.protected, "protected");
-      renderList("notionList", data.notion, "notion");
-      renderList("calendarList", data.calendar, "calendar");
+      renderFocus(data.windowName, data.items);
     } catch {
-      renderList("protectedList", [], "protected");
-      renderList("notionList", [], "notion");
-      renderList("calendarList", [], "calendar");
+      renderFocus(null, []);
     }
-    attachTaskHandlers();
   }
-  loadTasks();
+
+  loadStatus();
+  loadFocus();
 
   async function checkHealth() {
     const pill = document.getElementById("healthPill"), txt = document.getElementById("healthText");
@@ -278,7 +337,8 @@
       audio.addEventListener("ended", () => semi.classList.remove("speaking"));
       audio.play();
 
-      loadTasks(); // an excuse may have changed task state
+      loadStatus(); // a commitment/drift/switch/completion may have changed
+      loadFocus();  // a schedule update may have changed the current window
     } catch {
       startSpeaking(3500);
     }

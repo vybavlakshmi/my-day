@@ -4,6 +4,9 @@
     { "source": "/tasks", "destination": "/api/index" },
     { "source": "/chat", "destination": "/api/index" },
     { "source": "/task/toggle", "destination": "/api/index" },
-    { "source": "/speak", "destination": "/api/index" }
+    { "source": "/speak", "destination": "/api/index" },
+    { "source": "/status", "destination": "/api/index" },
+    { "source": "/parked", "destination": "/api/index" },
+    { "source": "/focus", "destination": "/api/index" }
   ]
 }
