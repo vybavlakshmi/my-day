@@ -168,7 +168,13 @@ ${planLines}
 
 Vybes just said: "${updateMessage}"
 
-Re-work the remaining windows for today based on this update. Use judgment on how it ripples into what follows — e.g. a long nap shrinks or delays what comes after it, a shortened cook window just shrinks that one window. Don't blindly shift every later window by the same amount. Keep window names simple (cook, cab_to_hospital, hospital, cab_home, settle, nap_fork, fragile_hour, dinner_prep, own_dinner, cleanup, midnight_desk, or a new name if genuinely new). Only include windows from now onward — drop anything already fully in the past. Each window's windowFit must be exactly one of: ${WINDOW_FITS.join(', ')}.
+Re-work the remaining windows for today based on this update. Use judgment on how it ripples into what follows — e.g. a long nap shrinks or delays what comes after it, a shortened cook window just shrinks that one window. Don't blindly shift every later window by the same amount.
+
+Keep each window's duration realistic for what it actually is (dinner prep needs real time, not a token slot) — if there genuinely isn't enough time left for everything, DROP or MERGE lower-priority windows rather than compressing every window to a uniform short block. Never invent uniform back-to-back 1-hour slots just to fit everything in.
+
+If it is already very late (post-midnight, early hours) and a lot of the evening hasn't happened yet, don't force-cram the full remaining routine into the few hours before dawn — it's fine and often correct for the plan to be short (e.g. just a wind-down/rest window), with a reply that names the tradeoff plainly rather than pretending a full evening still fits.
+
+Keep window names simple (cook, cab_to_hospital, hospital, cab_home, settle, nap_fork, fragile_hour, dinner_prep, own_dinner, cleanup, midnight_desk, or a new name if genuinely new). Only include windows from now onward — drop anything already fully in the past. Each window's windowFit must be exactly one of: ${WINDOW_FITS.join(', ')}.
 
 Reply with ONLY a JSON object:
 {"plan": [{"name": "...", "start": "HH:MM", "end": "HH:MM", "windowFit": "..."}], "reply": "Maya's short spoken confirmation, 1-2 sentences"}`;
