@@ -247,6 +247,32 @@ Reply with ONLY a JSON object:
   }
 }
 
+// Phrases the suggestion for 1-2 already-selected Item Registry entries. Selection
+// itself (which items, filtering by window-fit/status/class) lives in cadence.js.
+async function suggestFocus(windowName, items) {
+  if (!items.length) {
+    return "Nothing specific queued for right now — you're between windows, or the registry's just quiet here.";
+  }
+  const itemLines = items.map(i => `- ${i.title} (${i.class}, ${i.domain || 'general'})`).join('\n');
+  const prompt = `Current window: ${windowName}.
+
+Candidate items that fit this window right now:
+${itemLines}
+
+Suggest these to Vybes in your voice, warm and brief — 1-2 sentences for the whole reply, not per item. If any item is protected, be gently persistent about it with an easy off-ramp ("even 10 minutes counts"), never guilt. Never present the full backlog — just these.`;
+
+  const completion = await client.chat.completions.create({
+    model: MODEL,
+    messages: [
+      { role: 'system', content: MANAGER_VOICE },
+      { role: 'user', content: prompt },
+    ],
+    temperature: 0.7,
+  });
+
+  return completion.choices[0].message.content.trim();
+}
+
 module.exports = {
   judgeExcuse,
   weeklyReview,
@@ -254,4 +280,5 @@ module.exports = {
   classifyCommitment,
   planDay,
   DEFAULT_DAY_TEMPLATE,
+  suggestFocus,
 };

@@ -9,6 +9,23 @@ const EXCUSE_KEYWORDS = [
   'skipped', 'forgot', 'busy', 'excuse', 'later', 'tomorrow', 'postpone',
 ];
 
+const DIRECTION_PHRASES = [
+  'what should i do', 'what now', "what's next", 'whats next',
+  'what do i do', 'what next', 'what can i do', 'focus on',
+];
+
+// Day Schedule uses lowercase_snake window-fit names; Item Registry uses the
+// capitalized-hyphenated names Vybes built the database with. These don't match
+// as strings, so map explicitly rather than normalizing either one.
+const WINDOW_FIT_MAP = {
+  movement: 'Movement',
+  seated_screen: 'Seated-screen',
+  seated_thinking: 'Seated-thinking',
+  hands_busy_voice: 'Hands-busy-voice',
+  laptop_execution: 'Laptop-execution',
+  any: 'Any',
+};
+
 async function getAllTasks() {
   const [notionResult, calendarResult] = await Promise.allSettled([
     notion.getOpenTasks(3),
@@ -90,7 +107,12 @@ async function handleChat(text) {
     }
 
     default:
-      break; // 'other' falls through to the existing excuse/plain-chat logic below
+      break; // 'other' falls through below
+  }
+
+  if (isDirectionSeeking(text)) {
+    const { windowName, items } = await getFocusItems();
+    return groq.suggestFocus(windowName, items);
   }
 
   const tasks = await getAllTasks();
@@ -124,8 +146,7 @@ function inWindow(nowMin, startMin, endMin) {
   return nowMin >= startMin || nowMin <= endMin; // window crosses midnight
 }
 
-// Which of today's plan windows contains right now, if any. Feeds the item-selection
-// logic (not yet built) that picks 1-2 Item Registry entries matching this window's fit.
+// Which of today's plan windows contains right now, if any.
 async function getCurrentWindow() {
   const dayPlan = await notion.getDayPlan();
   if (!dayPlan || !dayPlan.plan.length) return null;
@@ -136,4 +157,28 @@ async function getCurrentWindow() {
   return dayPlan.plan.find(w => inWindow(nowMin, timeToMinutes(w.start), timeToMinutes(w.end))) || null;
 }
 
-module.exports = { getAllTasks, handleChat, getCurrentWindow };
+function isDirectionSeeking(text) {
+  const lower = text.toLowerCase();
+  return DIRECTION_PHRASES.some(p => lower.includes(p));
+}
+
+// Picks up to `limit` Active registry items fitting the current window, protected
+// class first. No "already done recently" dedup yet — deferred, needs a completion-
+// tracking flow that doesn't exist until there's a UI or chat-based "mark done."
+async function getFocusItems(limit = 2) {
+  const window = await getCurrentWindow();
+  if (!window) return { windowName: null, items: [] };
+
+  const registry = await notion.getItemRegistry();
+  const wantedFit = WINDOW_FIT_MAP[window.windowFit];
+  const active = registry.filter(item => item.status === 'Active');
+  const candidates = window.windowFit === 'any'
+    ? active
+    : active.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
+
+  candidates.sort((a, b) => (a.class === 'Protected' ? -1 : 0) - (b.class === 'Protected' ? -1 : 0));
+
+  return { windowName: window.name, items: candidates.slice(0, limit) };
+}
+
+module.exports = { getAllTasks, handleChat, getCurrentWindow, getFocusItems };
