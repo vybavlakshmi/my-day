@@ -13,3 +13,10 @@ Running log of minor decisions/caveats made without stopping to check in. Read w
   - This is a judgment call, not a spec requirement — if the mapping reads oddly in the actual log once there's real data, worth revisiting.
 - Focus-item suggestions (`getFocusItems`/`suggestFocus`) now also log to Task Log with `source: 'registry'`, `status: 'given'`, only when items were actually found (empty suggestions aren't logged — nothing happened, nothing to log).
 - **Hard adaptation NOT built** — per spec §6, this explicitly needs 1 week to 1 month of real observation data first ("Maya asks more, assumes less, logs everything" during the beta window). The logging hooks above are that beta-mode data collection. Revisit hard-adaptation logic once there's real usage history to look at, not synthetic test data.
+
+## §7 remaining sources
+- Elegance/RDF Plans, Creative Branch Wants, Projects Builds — all 3 built as separate small DBs rather than cramming into Item Registry, since their fields don't overlap with it (no class/window-fit relevance) and mixing concerns would make Item Registry's queries messier.
+- Creative Branch Wants got a write path (`creative_want_add` classifier intent) since "capturing an idea" is squarely inform-only per §5, same shape as grocery. Elegance/RDF and Projects/Builds are read-only from the app for now — no natural "Maya, add an RDF plan" chat trigger came to mind that wouldn't just be duplicating the grocery/creative-want pattern without a clear need for it yet; can add later if it turns out useful.
+
+## Pending manual setup (batched — same pattern as every new DB all session)
+3 new databases from this stretch of work need connecting to "My Day Manager" + a matching Vercel env var before they're live: **Elegance RDF Plans** (`ELEGANCE_RDF_DB`), **Creative Branch Wants** (`CREATIVE_WANTS_DB`), **Projects Builds** (`PROJECTS_BUILDS_DB`). IDs are in `.env.example`. Task Log's schema change (§6) does NOT need a new connection — it's an existing, already-connected database, only its schema changed. Continuing other work rather than blocking on these three being connected.
