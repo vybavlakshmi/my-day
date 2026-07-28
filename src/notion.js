@@ -77,16 +77,15 @@ async function getLedgerSummary(limit = 10) {
   }));
 }
 
-async function logTaskEvent({ task, source, status, date }) {
-  await notion.pages.create({
-    parent: { database_id: TASK_LOG_DB },
-    properties: {
-      Task: { title: [{ text: { content: task } }] },
-      Source: { select: { name: source } },
-      Status: { select: { name: status } },
-      Date: { date: { start: date || todayISO() } },
-    },
-  });
+async function logTaskEvent({ task, source, status, date, detail }) {
+  const properties = {
+    Task: { title: [{ text: { content: task } }] },
+    Source: { select: { name: source } },
+    Status: { select: { name: status } },
+    Date: { date: { start: date || todayISO() } },
+  };
+  if (detail) properties.Detail = { rich_text: [{ text: { content: detail } }] };
+  await notion.pages.create({ parent: { database_id: TASK_LOG_DB }, properties });
 }
 
 // The one open commitment right now — a singleton row, updated in place rather than

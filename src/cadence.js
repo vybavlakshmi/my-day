@@ -72,6 +72,12 @@ async function handleChat(text) {
   // than a request for a suggestion, since the classifier never saw this concept.
   if (isDirectionSeeking(text)) {
     const { windowName, items } = await getFocusItems();
+    if (items.length) {
+      await notion.logTaskEvent({
+        task: items.map(i => i.title).join(' / '), source: 'registry', status: 'given',
+        detail: `Suggested for window "${windowName}"`,
+      });
+    }
     return groq.suggestFocus(windowName, items);
   }
 
@@ -83,21 +89,36 @@ async function handleChat(text) {
       await notion.setActiveCommitment(classification.extracted || text);
       return classification.reply;
 
-    case 'drift':
-      await notion.addParkedThread(classification.extracted || text);
+    case 'drift': {
+      const thread = classification.extracted || text;
+      await notion.addParkedThread(thread);
+      await notion.logTaskEvent({
+        task: thread, source: 'commitment', status: 'given',
+        detail: `Drift from "${activeCommitment ? activeCommitment.commitment : '(none)'}": parked "${thread}"`,
+      });
       return classification.reply;
+    }
 
-    case 'conscious_switch':
+    case 'conscious_switch': {
+      const newCommitment = classification.extracted || text;
       if (activeCommitment) {
         await notion.addParkedThread(activeCommitment.commitment);
       }
-      await notion.setActiveCommitment(classification.extracted || text);
+      await notion.setActiveCommitment(newCommitment);
+      await notion.logTaskEvent({
+        task: newCommitment, source: 'commitment', status: 'rescheduled',
+        detail: `Conscious switch from "${activeCommitment ? activeCommitment.commitment : '(none)'}" to "${newCommitment}"`,
+      });
       return classification.reply;
+    }
 
     case 'completion':
       if (activeCommitment) {
         await notion.closeCommitment(activeCommitment.commitment, activeCommitment.started, 'completed');
         await notion.clearActiveCommitment();
+        await notion.logTaskEvent({
+          task: activeCommitment.commitment, source: 'commitment', status: 'done',
+        });
       }
       return classification.reply;
 
