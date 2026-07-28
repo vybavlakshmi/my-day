@@ -67,6 +67,14 @@ function looksLikeExcuse(text) {
 }
 
 async function handleChat(text) {
+  // Checked first, before commitment classification — "what should I do now" was
+  // getting misread as a new_commitment ("Commitment: what should I do now") rather
+  // than a request for a suggestion, since the classifier never saw this concept.
+  if (isDirectionSeeking(text)) {
+    const { windowName, items } = await getFocusItems();
+    return groq.suggestFocus(windowName, items);
+  }
+
   const activeCommitment = await notion.getActiveCommitment();
   const classification = await groq.classifyCommitment(activeCommitment, text);
 
@@ -107,12 +115,7 @@ async function handleChat(text) {
     }
 
     default:
-      break; // 'other' falls through below
-  }
-
-  if (isDirectionSeeking(text)) {
-    const { windowName, items } = await getFocusItems();
-    return groq.suggestFocus(windowName, items);
+      break; // 'other' falls through to the excuse/plain-chat logic below
   }
 
   const tasks = await getAllTasks();
