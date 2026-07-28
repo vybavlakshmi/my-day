@@ -211,7 +211,7 @@ Vybes just said: "${updateMessage}"
 Re-work the remaining windows for today based on this update. Use judgment on how it ripples into what follows — e.g. a long nap shrinks or delays what comes after it, a shortened cook window just shrinks that one window. Don't blindly shift every later window by the same amount.
 
 HARD RULES — do not violate these, ever:
-1. Nothing may be scheduled to end later than 01:00 (1am). If everything doesn't fit before 01:00, DROP or shrink lower-priority windows rather than pushing past 01:00.
+1. Nothing may be scheduled to end later than 01:00 (1am). If everything doesn't fit before 01:00, DROP or shrink lower-priority windows rather than pushing past 01:00. If it is already past 01:00 right now, the cutoff has already passed — do not schedule anything new at all beyond maybe one single short wind-down/essential window ending as soon as possible; the plan should be very short or empty, not a normal-length window that just happens to start late.
 2. No gap greater than 20 minutes between the end of one window and the start of the next.
 3. Priority when things don't fit: feeding Mom, her medicines, and Vybes' own meals/medicines are NOT negotiable — never drop or meaningfully shrink these. Discretionary windows (gaming/creativity, pilates/tai chi, quiet time, buffer, walk_reflection) are what flex, shrink, or get dropped first.
 
