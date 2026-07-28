@@ -38,3 +38,14 @@ Same pattern as every other feature this session — testing writes real rows. A
 
 ## Session complete — all 9 planned tasks done
 §6 (Learning Loop), §7 (3 new Notion sources + input logged for the 3 that need your own definitions), §8 (architecture conflict logged, not built), §9 (frontend) — all built, pushed, and live-verified except where noted above as pending your manual Notion-connection + Vercel env var steps. See `KNOWLEDGE_TRANSFER_v6.md` for the full technical snapshot, `NEEDS_INPUT.md` for what's still waiting on you.
+
+---
+
+## Bugs reported by Vybes after live use — for tomorrow, not yet investigated
+
+1. **No audio output at all.**
+2. **Typed messages "go into oblivion"** — no visible response of any kind.
+
+These two are likely the same root cause: `handleSend()` in `index.html` never renders Maya's reply as *text* anywhere — the reply only ever gets spoken via `/speak` + `audio.play()`. So if `/speak` fails (candidates: Edge TTS behaving differently inside Vercel's serverless environment than it did in earlier ad-hoc testing, since `msedge-tts` talks to Microsoft's service over a connection that serverless cold-starts/short function lifetimes could disrupt; or a browser autoplay-policy issue, since `audio.play()` fires after an `await fetch()`, and some browsers no longer treat that as within the original click's "user gesture" window), the result is exactly what got reported: total silence, nothing visible. Tomorrow: check browser console + Network tab on an actual failed send first, don't guess blind. Likely fix has two parts — find why `/speak`/playback fails, AND add a text rendering of the reply so a voice failure isn't a total-silence failure.
+
+3. **Ticking a focus-card item as done reverts on reload.** Not a new bug — already logged above as a known, shipped-as-is gap (no completion-tracking exists for Item Registry items). Confirmed real by her report. Fix requires building actual persistence (a "done today" concept for registry items), which is the same underlying work the deferred §4 "already done recently" dedup needs — worth doing both together tomorrow rather than separately.
