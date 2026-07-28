@@ -79,6 +79,16 @@ async function handleChat(text) {
     case 'continuation':
       return classification.reply;
 
+    case 'schedule_update': {
+      const existing = await notion.getDayPlan();
+      const currentTime = new Date().toLocaleTimeString('en-GB', {
+        timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
+      });
+      const { plan, reply } = await groq.planDay(existing ? existing.plan : null, text, currentTime);
+      await notion.setDayPlan(plan);
+      return reply;
+    }
+
     default:
       break; // 'other' falls through to the existing excuse/plain-chat logic below
   }
@@ -104,4 +114,26 @@ async function handleChat(text) {
   return groq.chatReply(text, summary);
 }
 
-module.exports = { getAllTasks, handleChat };
+function timeToMinutes(hhmm) {
+  const [h, m] = hhmm.split(':').map(Number);
+  return h * 60 + m;
+}
+
+function inWindow(nowMin, startMin, endMin) {
+  if (startMin <= endMin) return nowMin >= startMin && nowMin <= endMin;
+  return nowMin >= startMin || nowMin <= endMin; // window crosses midnight
+}
+
+// Which of today's plan windows contains right now, if any. Feeds the item-selection
+// logic (not yet built) that picks 1-2 Item Registry entries matching this window's fit.
+async function getCurrentWindow() {
+  const dayPlan = await notion.getDayPlan();
+  if (!dayPlan || !dayPlan.plan.length) return null;
+  const now = new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+  const nowMin = timeToMinutes(now);
+  return dayPlan.plan.find(w => inWindow(nowMin, timeToMinutes(w.start), timeToMinutes(w.end))) || null;
+}
+
+module.exports = { getAllTasks, handleChat, getCurrentWindow };

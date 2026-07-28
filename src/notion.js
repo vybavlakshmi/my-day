@@ -9,6 +9,7 @@ const ACTIVE_COMMITMENT_DB = process.env.ACTIVE_COMMITMENT_DB;
 const PARKED_THREADS_DB = process.env.PARKED_THREADS_DB;
 const COMMITMENT_HISTORY_DB = process.env.COMMITMENT_HISTORY_DB;
 const ITEM_REGISTRY_DB = process.env.ITEM_REGISTRY_DB;
+const DAY_SCHEDULE_DB = process.env.DAY_SCHEDULE_DB;
 
 function plainText(richTextArray) {
   return (richTextArray || []).map(t => t.plain_text).join('');
@@ -183,6 +184,44 @@ async function getItemRegistry() {
   }));
 }
 
+function todayISO() {
+  return new Date().toISOString().slice(0, 10);
+}
+
+// Today's schedule, if Maya has planned/replanned it at least once today. One row
+// per calendar day (not a strict singleton) — updated in place through the day,
+// naturally leaving a history of past days' plans once a new day starts.
+async function getDayPlan() {
+  const today = todayISO();
+  const res = await notion.databases.query({
+    database_id: DAY_SCHEDULE_DB,
+    filter: { property: 'Day', date: { equals: today } },
+    page_size: 1,
+  });
+  if (!res.results.length) return null;
+  const page = res.results[0];
+  try {
+    return { id: page.id, plan: JSON.parse(plainText(page.properties.Plan.rich_text)) };
+  } catch {
+    return { id: page.id, plan: [] };
+  }
+}
+
+async function setDayPlan(plan) {
+  const today = todayISO();
+  const existing = await getDayPlan();
+  const properties = {
+    Date: { title: [{ text: { content: today } }] },
+    Day: { date: { start: today } },
+    Plan: { rich_text: [{ text: { content: JSON.stringify(plan) } }] },
+  };
+  if (existing) {
+    await notion.pages.update({ page_id: existing.id, properties });
+  } else {
+    await notion.pages.create({ parent: { database_id: DAY_SCHEDULE_DB }, properties });
+  }
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -194,6 +233,8 @@ module.exports = {
   clearActiveCommitment,
   addParkedThread,
   getParkedThreads,
+  getDayPlan,
+  setDayPlan,
   updateParkedThreadStatus,
   closeCommitment,
   getItemRegistry,
