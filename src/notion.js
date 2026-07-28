@@ -10,6 +10,7 @@ const PARKED_THREADS_DB = process.env.PARKED_THREADS_DB;
 const COMMITMENT_HISTORY_DB = process.env.COMMITMENT_HISTORY_DB;
 const ITEM_REGISTRY_DB = process.env.ITEM_REGISTRY_DB;
 const DAY_SCHEDULE_DB = process.env.DAY_SCHEDULE_DB;
+const GROCERY_LIST_DB = process.env.GROCERY_LIST_DB;
 
 function plainText(richTextArray) {
   return (richTextArray || []).map(t => t.plain_text).join('');
@@ -224,6 +225,30 @@ async function setDayPlan(plan) {
   }
 }
 
+// Inform-only per Maya v2 §5 — Maya just adds these and states it, no confirmation wait.
+async function addGroceryItems(items) {
+  const today = todayISO();
+  await Promise.all(items.map(item => notion.pages.create({
+    parent: { database_id: GROCERY_LIST_DB },
+    properties: {
+      Item: { title: [{ text: { content: item } }] },
+      Added: { date: { start: today } },
+    },
+  })));
+}
+
+async function getGroceryList() {
+  const res = await notion.databases.query({
+    database_id: GROCERY_LIST_DB,
+    filter: { property: 'Bought', checkbox: { equals: false } },
+  });
+  return res.results.map(page => ({ id: page.id, item: plainText(page.properties.Item.title) }));
+}
+
+async function markGroceryBought(id, bought) {
+  await notion.pages.update({ page_id: id, properties: { Bought: { checkbox: bought } } });
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -240,4 +265,7 @@ module.exports = {
   updateParkedThreadStatus,
   closeCommitment,
   getItemRegistry,
+  addGroceryItems,
+  getGroceryList,
+  markGroceryBought,
 };
