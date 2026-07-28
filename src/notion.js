@@ -165,7 +165,7 @@ async function closeCommitment(text, started, outcome) {
   await notion.pages.create({ parent: { database_id: COMMITMENT_HISTORY_DB }, properties });
 }
 
-// The full master list of recurring intentions, as tagged by Vybes (class/cadence/window_fit).
+// The full master list of recurring intentions, as tagged by Vybes (class/cadence/domain/window-fit).
 // Selecting 1-2 for the current window is the Timing Engine's job, not this function's.
 async function getItemRegistry() {
   const res = await notion.databases.query({ database_id: ITEM_REGISTRY_DB, page_size: 100 });
@@ -174,7 +174,12 @@ async function getItemRegistry() {
     title: plainText(page.properties.Title.title),
     class: page.properties.Class.select ? page.properties.Class.select.name : null,
     cadence: page.properties.Cadence.select ? page.properties.Cadence.select.name : null,
-    windowFit: page.properties['Window Fit'].select ? page.properties['Window Fit'].select.name : null,
+    domain: page.properties.Domain && page.properties.Domain.select ? page.properties.Domain.select.name : null,
+    status: page.properties.Status && page.properties.Status.select ? page.properties.Status.select.name : null,
+    notes: page.properties.Notes ? plainText(page.properties.Notes.rich_text) : '',
+    windowFit: page.properties['Window-fit'] && page.properties['Window-fit'].multi_select
+      ? page.properties['Window-fit'].multi_select.map(o => o.name)
+      : [],
   }));
 }
 
