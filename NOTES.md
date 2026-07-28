@@ -29,3 +29,12 @@ Running log of minor decisions/caveats made without stopping to check in. Read w
 - **UX trade-off worth flagging:** the old "From Notion" card's tap-to-tick-in-Notion feature (`POST /task/toggle`, source `notion`) has no UI entry point anymore, since that card is gone. The endpoint still exists and still works, just nothing in the new frontend calls it. Real Notion checkbox-ticking is currently only reachable if you ask Maya to do it via chat, and there's no chat trigger built for that either. Not fixed here — flagging in case it's a feature you actually used.
 - Focus-surface items are click-to-toggle **visually only**, no backend persistence (same root cause as the deferred "already done recently" dedup from §4 — there's no completion-tracking for Item Registry entries at all yet). A refresh will show the item again. Honest UI, not broken UI, but worth knowing before relying on it.
 - Milestone bar: implemented as a conditional — `GET /status` always returns `milestone: null` right now (no Roadmap data source exists), so the top bar always shows the static "MY DAY" title. The frontend code checks `data.milestone` and will swap in the countdown text automatically the moment a real value comes from the backend — no frontend change needed once Roadmap exists, only a backend one.
+- **Verified end-to-end live**, including the actual click interaction (not just data fetching): commitment strip shows a real active commitment ("portfolio site") and correct parked count, the "tap to see" expand shows the real parked thread, and the focus card correctly showed 2 protected-tagged real Item Registry items for an "any"-fit window, protected-first as designed.
+
+## Test data left in Notion (fake, from verification testing)
+Same pattern as every other feature this session — testing writes real rows. Active Commitment currently holds **"portfolio site"** (fake, from the §9 end-to-end test) and Parked Threads has **"competitor pricing"** (fake, from an earlier §6 test). Delete both when convenient, same as previous cleanups this session — not urgent, doesn't block anything.
+
+---
+
+## Session complete — all 9 planned tasks done
+§6 (Learning Loop), §7 (3 new Notion sources + input logged for the 3 that need your own definitions), §8 (architecture conflict logged, not built), §9 (frontend) — all built, pushed, and live-verified except where noted above as pending your manual Notion-connection + Vercel env var steps. See `KNOWLEDGE_TRANSFER_v6.md` for the full technical snapshot, `NEEDS_INPUT.md` for what's still waiting on you.

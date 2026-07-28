@@ -36,10 +36,12 @@ A prioritization/timing/focus-enforcement engine, not a task dashboard. Core loo
 - [x] §3 Item Registry (real data, Vybes' own richer schema)
 - [x] §4 Timing Engine (Day Schedule + item-selection) — 2 known deferred edges: "already done recently" dedup not built, 1am cutoff not reliably enforced when *now* is already past it
 - [x] §5 Write-tiering (grocery list as the concrete example)
-- [ ] §6 Learning Loop
-- [ ] §7 remaining Notion sources
-- [ ] §8 App-launching (blocked — see above)
-- [ ] §9 Frontend adaptive surface
+- [x] §6 Learning Loop (behavioral logging built; hard-adaptation deferred, needs real usage data)
+- [x] §7 remaining Notion sources (Elegance/RDF, Creative Wants, Projects/Builds built; Roadmap/Relationship-map/life-plan need Vybes' own input — see NEEDS_INPUT.md)
+- [x] §8 App-launching logged as architecturally blocked (see NEEDS_INPUT.md) — NOT built, needs a decision first
+- [x] §9 Frontend adaptive surface (commitment strip, single adaptive card, milestone-bar stub) — live and verified
+
+Full v2 build order is now implemented. See `KNOWLEDGE_TRANSFER_v6.md` for the complete technical snapshot and `NOTES.md`/`NEEDS_INPUT.md` for the reasoning trail and open questions.
 
 ## Testing pattern
 
