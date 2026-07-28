@@ -141,6 +141,12 @@ async function handleChat(text) {
       }
       return classification.reply;
 
+    case 'creative_want_add':
+      if (classification.creativeWant) {
+        await notion.addCreativeWant(classification.creativeWant.title, classification.creativeWant.type, text);
+      }
+      return classification.reply;
+
     default:
       break; // 'other' falls through to the excuse/plain-chat logic below
   }

@@ -89,7 +89,7 @@ Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not
 
 const COMMITMENT_INTENTS = [
   'new_commitment', 'continuation', 'drift', 'conscious_switch', 'completion',
-  'schedule_update', 'grocery_add', 'other',
+  'schedule_update', 'grocery_add', 'creative_want_add', 'other',
 ];
 
 // The Commitment-Keeper core: classifies what an incoming message means for the
@@ -111,10 +111,11 @@ Classify this message as exactly one of:
 - "completion": Vybes is saying the current active commitment is finished or done
 - "schedule_update": Vybes is telling Maya something that changes today's actual schedule/timing OR her available capacity right now — NOT about a task commitment, about the shape of the day itself. Examples: "hospital's 11 to 2 today", "napped for hours", "lunch at uncle's cut my morning short", "I'm free for the rest of the night", "nothing else pending today", "that's everything done for now". A statement describing available time or that caregiving/chores are done for now is a schedule_update, even with no specific event named — it is NOT a new_commitment just because time has opened up.
 - "grocery_add": Vybes is telling Maya to add item(s) to the grocery list (e.g. "add curd and paneer to grocery", "we need milk")
+- "creative_want_add": Vybes is capturing a creative idea/want — a comic, web novel, story, or character art idea (e.g. "idea for the web novel: a character who...", "comic idea — ...")
 - "other": general question or comment, not related to any of the above
 
 Reply with ONLY a JSON object:
-{"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if not applicable", "groceryItems": ["array of item names, only when intent is grocery_add, otherwise empty array"], "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it. On schedule_update: just acknowledge briefly, the actual replan happens separately. On grocery_add: state plainly what was added, no confirmation question needed."}`;
+{"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if not applicable", "groceryItems": ["array of item names, only when intent is grocery_add, otherwise empty array"], "creativeWant": {"title": "short title, only when intent is creative_want_add", "type": "one of comic/web_novel/story/character_art/other"}, "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it. On schedule_update: just acknowledge briefly, the actual replan happens separately. On grocery_add or creative_want_add: state plainly what was added/captured, no confirmation question needed."}`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -133,10 +134,11 @@ Reply with ONLY a JSON object:
       intent: COMMITMENT_INTENTS.includes(parsed.intent) ? parsed.intent : 'other',
       extracted: parsed.extracted || '',
       groceryItems: Array.isArray(parsed.groceryItems) ? parsed.groceryItems : [],
+      creativeWant: parsed.creativeWant && parsed.creativeWant.title ? parsed.creativeWant : null,
       reply: parsed.reply || raw,
     };
   } catch {
-    return { intent: 'other', extracted: '', groceryItems: [], reply: raw };
+    return { intent: 'other', extracted: '', groceryItems: [], creativeWant: null, reply: raw };
   }
 }
 

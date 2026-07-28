@@ -11,6 +11,9 @@ const COMMITMENT_HISTORY_DB = process.env.COMMITMENT_HISTORY_DB;
 const ITEM_REGISTRY_DB = process.env.ITEM_REGISTRY_DB;
 const DAY_SCHEDULE_DB = process.env.DAY_SCHEDULE_DB;
 const GROCERY_LIST_DB = process.env.GROCERY_LIST_DB;
+const ELEGANCE_RDF_DB = process.env.ELEGANCE_RDF_DB;
+const CREATIVE_WANTS_DB = process.env.CREATIVE_WANTS_DB;
+const PROJECTS_BUILDS_DB = process.env.PROJECTS_BUILDS_DB;
 
 function plainText(richTextArray) {
   return (richTextArray || []).map(t => t.plain_text).join('');
@@ -248,6 +251,47 @@ async function markGroceryBought(id, bought) {
   await notion.pages.update({ page_id: id, properties: { Bought: { checkbox: bought } } });
 }
 
+async function getEleganceRDFPlans() {
+  const res = await notion.databases.query({ database_id: ELEGANCE_RDF_DB, page_size: 100 });
+  return res.results.map(page => ({
+    id: page.id,
+    title: plainText(page.properties.Title.title),
+    cadence: page.properties.Cadence.select ? page.properties.Cadence.select.name : null,
+    notes: plainText(page.properties.Notes.rich_text),
+  }));
+}
+
+// Inform-only per §5 — same tier as grocery.
+async function addCreativeWant(title, type, notes) {
+  const properties = {
+    Title: { title: [{ text: { content: title } }] },
+    Type: { select: { name: type || 'other' } },
+  };
+  if (notes) properties.Notes = { rich_text: [{ text: { content: notes } }] };
+  await notion.pages.create({ parent: { database_id: CREATIVE_WANTS_DB }, properties });
+}
+
+async function getCreativeWants() {
+  const res = await notion.databases.query({ database_id: CREATIVE_WANTS_DB, page_size: 100 });
+  return res.results.map(page => ({
+    id: page.id,
+    title: plainText(page.properties.Title.title),
+    type: page.properties.Type.select ? page.properties.Type.select.name : null,
+    notes: plainText(page.properties.Notes.rich_text),
+  }));
+}
+
+async function getProjectsBuilds() {
+  const res = await notion.databases.query({ database_id: PROJECTS_BUILDS_DB, page_size: 100 });
+  return res.results.map(page => ({
+    id: page.id,
+    title: plainText(page.properties.Title.title),
+    nextAction: plainText(page.properties['Next Action'].rich_text),
+    status: page.properties.Status.select ? page.properties.Status.select.name : null,
+    notes: plainText(page.properties.Notes.rich_text),
+  }));
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -267,4 +311,8 @@ module.exports = {
   addGroceryItems,
   getGroceryList,
   markGroceryBought,
+  getEleganceRDFPlans,
+  addCreativeWant,
+  getCreativeWants,
+  getProjectsBuilds,
 };
