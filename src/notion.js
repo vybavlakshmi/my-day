@@ -83,7 +83,7 @@ async function logTaskEvent({ task, source, status, date }) {
       Task: { title: [{ text: { content: task } }] },
       Source: { select: { name: source } },
       Status: { select: { name: status } },
-      Date: { date: { start: date || new Date().toISOString().slice(0, 10) } },
+      Date: { date: { start: date || todayISO() } },
     },
   });
 }
@@ -109,7 +109,7 @@ async function setActiveCommitment(text) {
   const current = await getActiveCommitment();
   const properties = {
     Commitment: { title: [{ text: { content: text } }] },
-    Started: { date: { start: new Date().toISOString().slice(0, 10) } },
+    Started: { date: { start: todayISO() } },
   };
   if (current) {
     await notion.pages.update({ page_id: current.id, properties });
@@ -130,7 +130,7 @@ async function addParkedThread(text) {
     parent: { database_id: PARKED_THREADS_DB },
     properties: {
       Thread: { title: [{ text: { content: text } }] },
-      'Parked At': { date: { start: new Date().toISOString().slice(0, 10) } },
+      'Parked At': { date: { start: todayISO() } },
       Status: { select: { name: 'parked' } },
     },
   });
@@ -159,7 +159,7 @@ async function updateParkedThreadStatus(id, status) {
 async function closeCommitment(text, started, outcome) {
   const properties = {
     Commitment: { title: [{ text: { content: text } }] },
-    Closed: { date: { start: new Date().toISOString().slice(0, 10) } },
+    Closed: { date: { start: todayISO() } },
     Outcome: { select: { name: outcome } },
   };
   if (started) properties.Started = { date: { start: started } };
@@ -185,7 +185,9 @@ async function getItemRegistry() {
 }
 
 function todayISO() {
-  return new Date().toISOString().slice(0, 10);
+  // NOT toISOString() — that returns the UTC date, which is wrong for hours after
+  // midnight IST but before midnight UTC (00:00-05:30 IST is still "yesterday" in UTC).
+  return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
 
 // Today's schedule, if Maya has planned/replanned it at least once today. One row
