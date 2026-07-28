@@ -108,7 +108,7 @@ Classify this message as exactly one of:
 - "drift": there IS an active commitment, and this introduces a different new task or idea (a tangent)
 - "conscious_switch": Vybes is explicitly saying the new thing should replace the current commitment right now (e.g. "actually let's do X instead", "no this is more important")
 - "completion": Vybes is saying the current active commitment is finished or done
-- "schedule_update": Vybes is telling Maya something that changes today's actual schedule/timing (e.g. "hospital's 11 to 2 today", "napped for hours", "lunch at uncle's cut my morning short") — NOT about a task commitment, about the shape of the day itself
+- "schedule_update": Vybes is telling Maya something that changes today's actual schedule/timing OR her available capacity right now — NOT about a task commitment, about the shape of the day itself. Examples: "hospital's 11 to 2 today", "napped for hours", "lunch at uncle's cut my morning short", "I'm free for the rest of the night", "nothing else pending today", "that's everything done for now". A statement describing available time or that caregiving/chores are done for now is a schedule_update, even with no specific event named — it is NOT a new_commitment just because time has opened up.
 - "other": general question or comment, not related to any of the above
 
 Reply with ONLY a JSON object:
