@@ -83,8 +83,13 @@ app.post('/speak', async (req, res) => {
     const audioStream = await maya.speak(text, voice);
     res.set('Content-Type', 'audio/webm');
     audioStream.pipe(res);
+    audioStream.on('error', err => {
+      console.error('speak stream error:', err);
+      if (!res.headersSent) res.status(500).json({ error: String(err && (err.message || err)) });
+    });
   } catch (err) {
-    res.status(500).json({ error: err.message });
+    console.error('speak error:', err);
+    res.status(500).json({ error: String(err && (err.message || err)), name: err && err.name, stack: err && err.stack });
   }
 });
 
