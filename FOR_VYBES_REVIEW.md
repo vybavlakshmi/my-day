@@ -9,15 +9,15 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 - [x] **Item Registry → "MOO layer build"**: done — Status → Paused, notes point at the Phase 6 re-entry window (~5–14 Nov 2026) instead of the dead 25 Aug date.
 - [x] **Item Registry → "Post publishing (2/day sprint)"**: done — notes updated to reflect current posting cadence, not a fixed 2/day.
 - [ ] **Item Registry → Domain field**: empty on all 62 rows. Only matters if you want domain-based reasoning later (e.g. "no business items on a heavy caregiving day"). Populate or ignore — your call, flagging only.
-- [ ] **Phase 1 — Zoomed In (Notion page)**: you said you already have a reworked plan for this and you'll send it over — I'll wait for that rather than write my own version.
+- [x] **Phase 1 — Zoomed In (Notion page)**: done — replaced the stale MOO-based August section with a summary of your reworked plan (product build replacing MOO, launch target 1 Sept), old content kept but marked historical, not deleted. Full day-by-day detail lives in `august-daily-schedule.md` in the project folder, not duplicated into Notion, so there's one source of truth.
 
 ---
 
 ## Decisions needed (check off once you've told me / decided)
 
 - [x] **Milestone surfacing** — confirmed: milestone bar on screen, and upcoming milestones actively shape what Maya suggests day to day (not just separate pop-ups).
-- [x] **Which "Day 0" clock** — confirmed: use the 90-Day Journey clock (Day 1 = 1 Sept 2026). Building against this.
-- [ ] **`DEFAULT_DAY_TEMPLATE` accuracy** — you said you'll send the updated version. Waiting on that before touching this file.
+- [x] **Which "Day 0" clock** — **corrected 2026-08-14**: you caught my mistake — Phase 1 stays on its original clock (Day 0 = 25 July 2026, so today is Day 20). 1 Sept is a target date for the new product launch, not a new Day-1 reset. Milestone bar will build against the original Phase 1 clock.
+- [x] **`DEFAULT_DAY_TEMPLATE` accuracy** — done, built from your updated table (5 shorter business slots through the day instead of one 30-min evening block, cardio blocks added). Held for your review before going live, same as the capacity cap.
 - [ ] *(No action needed, just confirming)* — I built the capacity-cap code on the reading that Life Truth sets the daily ceiling and The Map's business priority only decides what fills it. Flag me if that's wrong.
 
 ---
