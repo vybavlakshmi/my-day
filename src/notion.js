@@ -323,6 +323,32 @@ async function getTodayDoneRegistryTitles() {
   return new Set([...latestStatusByTitle].filter(([, status]) => status === 'done').map(([title]) => title));
 }
 
+// Marks a Negotiable registry item as introduced today, for Life Truth's 3-discretionary-
+// items/day cap. Only called once per distinct title per day (see getFocusItems) — this
+// is a log-once event, not a per-request write.
+async function logRegistrySurfaced(title) {
+  await logTaskEvent({ task: title, source: 'registry', status: 'surfaced' });
+}
+
+// Distinct registry titles already logged as newly-surfaced today. Deliberately separate
+// from getTodayDoneRegistryTitles (a 'done' entry already implies the item was surfaced,
+// so the two sets get unioned by the caller rather than merged here).
+async function getTodaySurfacedRegistryTitles() {
+  const today = todayISO();
+  const res = await notion.databases.query({
+    database_id: TASK_LOG_DB,
+    filter: {
+      and: [
+        { property: 'Source', select: { equals: 'registry' } },
+        { property: 'Date', date: { equals: today } },
+        { property: 'Status', select: { equals: 'surfaced' } },
+      ],
+    },
+    page_size: 100,
+  });
+  return new Set(res.results.map(page => plainText(page.properties.Task.title)));
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -348,4 +374,6 @@ module.exports = {
   getProjectsBuilds,
   logRegistryDone,
   getTodayDoneRegistryTitles,
+  logRegistrySurfaced,
+  getTodaySurfacedRegistryTitles,
 };

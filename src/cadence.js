@@ -213,6 +213,16 @@ function isEventNowish(event, now) {
   return now >= soonWindow && now <= end;
 }
 
+// Life Truth: max 3 discretionary things assigned per day during treatment. This is the
+// concrete, countable half of that rule — it caps distinct NEGOTIABLE items (registry +
+// notion brain-dump) introduced across the whole day, not per window. Calendar events and
+// Protected registry items (caregiving/health essentials) are exempt — they're fixed
+// obligations, not discretionary load, so they never count against or get blocked by this.
+// NOT built here: the qualitative "360-analysis" (energy cost, timing, current load,
+// sustainability) Life Truth also names. That needs real judgment, not a formula this
+// codebase can fake — flagged in FOR_VYBES_REVIEW.md rather than approximated silently.
+const DAILY_DISCRETIONARY_CAP = 3;
+
 // Picks up to `limit` items for the current window, blended from 3 sources —
 // Calendar (time-fixed, highest priority), Item Registry (protected before
 // negotiable, excluding anything done today so completing one reveals the next —
@@ -221,9 +231,10 @@ async function getFocusItems(limit = 2) {
   const window = await getCurrentWindow();
   if (!window) return { windowName: null, items: [] };
 
-  const [registry, doneToday, calendarResult, notionResult] = await Promise.all([
+  const [registry, doneToday, surfacedToday, calendarResult, notionResult] = await Promise.all([
     notion.getItemRegistry(),
     notion.getTodayDoneRegistryTitles(),
+    notion.getTodaySurfacedRegistryTitles(),
     calendar.getTodayEvents().catch(err => { console.error('focus calendar fetch failed:', err.message); return []; }),
     notion.getOpenTasks(3).catch(err => { console.error('focus notion fetch failed:', err.message); return []; }),
   ]);
@@ -233,14 +244,45 @@ async function getFocusItems(limit = 2) {
     .filter(e => isEventNowish(e, now))
     .map(e => ({ title: e.title, class: 'Protected', source: 'calendar' }));
 
+  // Titles already counted toward today's discretionary cap — a 'done' entry implies the
+  // item was surfaced at some point today, so the two logs are unioned here.
+  const negotiableCountedToday = new Set(
+    [...doneToday, ...surfacedToday].filter(title => {
+      const item = registry.find(r => r.title === title);
+      return item && item.class === 'Negotiable';
+    })
+  );
+  let capReached = negotiableCountedToday.size >= DAILY_DISCRETIONARY_CAP;
+
   const wantedFit = WINDOW_FIT_MAP[window.windowFit];
   const activeRegistry = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
-  const registryCandidates = (window.windowFit === 'any'
+  const fitFilteredRegistry = window.windowFit === 'any'
     ? activeRegistry
-    : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'))
-  ).map(item => ({ title: item.title, class: item.class, source: 'registry' }));
+    : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
 
-  const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
+  const registryCandidates = [];
+  for (const item of fitFilteredRegistry) {
+    if (item.class !== 'Negotiable') {
+      registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
+      continue;
+    }
+    if (negotiableCountedToday.has(item.title)) {
+      registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
+      continue;
+    }
+    if (capReached) continue; // new discretionary item, but today's 3 are already spent
+    registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
+    negotiableCountedToday.add(item.title);
+    if (negotiableCountedToday.size >= DAILY_DISCRETIONARY_CAP) capReached = true;
+    await notion.logRegistrySurfaced(item.title).catch(err => console.error('surfaced log failed:', err.message));
+  }
+
+  // Notion brain-dump tasks have no surfaced-tracking of their own yet, so once the cap is
+  // spent they're suppressed entirely rather than risking an uncounted new item slipping
+  // through — "when in doubt, don't assign it."
+  const notionCandidates = capReached
+    ? []
+    : notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
 
   const priorityRank = c => {
     if (c.source === 'calendar') return 0;
