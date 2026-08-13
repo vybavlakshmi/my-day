@@ -244,45 +244,13 @@ async function getFocusItems(limit = 2) {
     .filter(e => isEventNowish(e, now))
     .map(e => ({ title: e.title, class: 'Protected', source: 'calendar' }));
 
-  // Titles already counted toward today's discretionary cap — a 'done' entry implies the
-  // item was surfaced at some point today, so the two logs are unioned here.
-  const negotiableCountedToday = new Set(
-    [...doneToday, ...surfacedToday].filter(title => {
-      const item = registry.find(r => r.title === title);
-      return item && item.class === 'Negotiable';
-    })
-  );
-  let capReached = negotiableCountedToday.size >= DAILY_DISCRETIONARY_CAP;
-
   const wantedFit = WINDOW_FIT_MAP[window.windowFit];
   const activeRegistry = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
   const fitFilteredRegistry = window.windowFit === 'any'
     ? activeRegistry
     : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
-
-  const registryCandidates = [];
-  for (const item of fitFilteredRegistry) {
-    if (item.class !== 'Negotiable') {
-      registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
-      continue;
-    }
-    if (negotiableCountedToday.has(item.title)) {
-      registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
-      continue;
-    }
-    if (capReached) continue; // new discretionary item, but today's 3 are already spent
-    registryCandidates.push({ title: item.title, class: item.class, source: 'registry' });
-    negotiableCountedToday.add(item.title);
-    if (negotiableCountedToday.size >= DAILY_DISCRETIONARY_CAP) capReached = true;
-    await notion.logRegistrySurfaced(item.title).catch(err => console.error('surfaced log failed:', err.message));
-  }
-
-  // Notion brain-dump tasks have no surfaced-tracking of their own yet, so once the cap is
-  // spent they're suppressed entirely rather than risking an uncounted new item slipping
-  // through — "when in doubt, don't assign it."
-  const notionCandidates = capReached
-    ? []
-    : notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
+  const registryCandidates = fitFilteredRegistry.map(item => ({ title: item.title, class: item.class, source: 'registry' }));
+  const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
 
   const priorityRank = c => {
     if (c.source === 'calendar') return 0;
@@ -290,10 +258,46 @@ async function getFocusItems(limit = 2) {
     if (c.source === 'registry') return 2;
     return 3;
   };
-  const candidates = [...calendarCandidates, ...registryCandidates, ...notionCandidates]
+  const allCandidates = [...calendarCandidates, ...registryCandidates, ...notionCandidates]
     .sort((a, b) => priorityRank(a) - priorityRank(b));
 
-  return { windowName: window.name, items: candidates.slice(0, limit) };
+  // Titles already counted toward today's discretionary cap — a 'done' entry implies the
+  // item was surfaced at some point today, so the two logs are unioned here. Notion
+  // brain-dump items have no persistent surfaced-log of their own (only registry items
+  // do), so a notion candidate can only ever be "already counted" within this same walk,
+  // not across separate requests — see the comment below.
+  const negotiableCountedToday = new Set(
+    [...doneToday, ...surfacedToday].filter(title => {
+      const item = registry.find(r => r.title === title);
+      return item && item.class === 'Negotiable';
+    })
+  );
+
+  // Walk candidates in priority order, taking up to `limit`. A NEW (not-yet-counted-today)
+  // Negotiable candidate is skipped once the cap is already spent — everything else
+  // (Protected, Calendar, already-counted Negotiable) is never blocked by the cap.
+  // Only candidates that actually make it into the returned `items` get logged as
+  // newly-surfaced below — a candidate that loses out to `limit` was never really
+  // shown to Vybes, so it must not count against her 3 for the day (this was a real bug
+  // in the first version: it counted every fit-matching candidate, not just the ones
+  // actually returned, so items could silently eat the cap without ever being displayed).
+  const newlySurfacedTitles = [];
+  const items = [];
+  for (const candidate of allCandidates) {
+    if (items.length >= limit) break;
+    if (candidate.class === 'Negotiable' && !negotiableCountedToday.has(candidate.title)) {
+      if (negotiableCountedToday.size >= DAILY_DISCRETIONARY_CAP) continue; // today's 3 are spent
+      negotiableCountedToday.add(candidate.title);
+      if (candidate.source === 'registry') newlySurfacedTitles.push(candidate.title);
+    }
+    items.push(candidate);
+  }
+
+  for (const title of newlySurfacedTitles) {
+    await notion.logRegistrySurfaced(title).catch(err => console.error('surfaced log failed:', err.message));
+  }
+
+  return { windowName: window.name, items };
 }
 
 module.exports = { getAllTasks, handleChat, getCurrentWindow, getFocusItems };
