@@ -31,6 +31,12 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 ---
 
+## Picking back up next session
+- [ ] Make the day-template live (just needs your yes, I'll handle the rest).
+- [ ] Load the 19 days of specific business tasks into Maya's actual daily suggestions, and start the milestone bar — bigger job, paused for tonight at your call.
+
+---
+
 ## Background (no action — for context only)
 - Nothing was pushed this session; code + doc commits are bundled together locally.
 - `NEEDS_INPUT.md` #2 (roadmap milestones) is marked resolved — the data exists now; the real open question moved to Decisions above.
