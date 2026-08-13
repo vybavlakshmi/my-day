@@ -6,30 +6,28 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 ## ⚠️ Notion edits (only you can make these — I'm read-only)
 
-- [ ] **Item Registry → "MOO layer build"**: set Status → Paused, update Notes off "Layer 1 target 25 Aug 2026" (dead — MOO is parked per Current Truth/The Map, both Aug 9). Point notes at the Phase 6 re-entry window (~5–14 Nov 2026) instead.
-  *Why it matters: this item is still Active, so Maya could currently nudge you toward it as if the deadline's real.*
-- [ ] **Item Registry → "Post publishing (2/day sprint)"**: update Notes — the sprint ended ~4 Aug per The Map. Reflect current posting cadence, not a fixed 2/day.
+- [x] **Item Registry → "MOO layer build"**: done — Status → Paused, notes point at the Phase 6 re-entry window (~5–14 Nov 2026) instead of the dead 25 Aug date.
+- [x] **Item Registry → "Post publishing (2/day sprint)"**: done — notes updated to reflect current posting cadence, not a fixed 2/day.
 - [ ] **Item Registry → Domain field**: empty on all 62 rows. Only matters if you want domain-based reasoning later (e.g. "no business items on a heavy caregiving day"). Populate or ignore — your call, flagging only.
-- [ ] **Phase 1 — Zoomed In (Notion page)**: its Aug 10–31 day-by-day section still assumes MOO's dead 25 Aug launch. Its own text says it should defer to The Map when they disagree — worth a pass so it stops being misleading to read.
+- [ ] **Phase 1 — Zoomed In (Notion page)**: you said you already have a reworked plan for this and you'll send it over — I'll wait for that rather than write my own version.
 
 ---
 
 ## Decisions needed (check off once you've told me / decided)
 
-- [ ] **Milestone surfacing** — pick one: (a) milestone bar only, (b) bar + feeds into `getFocusItems()` selection, (c) bar + triggers its own nudges. Nothing's built here until you pick.
-- [ ] **Which "Day 0" clock** the milestone bar should use, if built — Map Phase 1 (25 Jul), original posting clock (25 Jul, tracked separately), or 90-Day Journey (1 Sept). May depend on the answer above.
-- [ ] **`DEFAULT_DAY_TEMPLATE` accuracy** — right now it has exactly one 30-min business window (17:40–18:10). Current Truth's July update describes scattered work chunks through the day instead. Confirm whether your real day still matches the one-slot version, or tell me the real windows if not — I won't guess this one.
-- [ ] *(No action needed, just confirming)* — I built the capacity-cap code (below) on the reading that Life Truth sets the daily ceiling and The Map's business priority only decides what fills it. Flag me if that's wrong.
+- [x] **Milestone surfacing** — confirmed: milestone bar on screen, and upcoming milestones actively shape what Maya suggests day to day (not just separate pop-ups).
+- [x] **Which "Day 0" clock** — confirmed: use the 90-Day Journey clock (Day 1 = 1 Sept 2026). Building against this.
+- [ ] **`DEFAULT_DAY_TEMPLATE` accuracy** — you said you'll send the updated version. Waiting on that before touching this file.
+- [ ] *(No action needed, just confirming)* — I built the capacity-cap code on the reading that Life Truth sets the daily ceiling and The Map's business priority only decides what fills it. Flag me if that's wrong.
 
 ---
 
-## Code review (before you push)
+## The "3 things a day" cap — status
 
-- [ ] Review commit `ecf1ccb` — `git log -p -1` — adds the 3-discretionary-items/day cap to `getFocusItems()`.
-- [ ] Push if it looks right — nothing's live yet.
-- [ ] After pushing: check `/focus` live across a couple of different windows.
-- [ ] Cross-check Notion Task Log directly for the new `surfaced` entries — don't just trust the chat reply.
-- [ ] Note for later: toggling an item done→un-done same day still counts it toward the 3 (intentional — it's "assigned," not "currently complete." Flag me if you want it to work differently).
+- [x] Live as of 2026-08-13, ~23:00 IST. You don't need to do anything technical here — I handled the turning-on and the checking myself.
+- [x] Found and fixed a real bug right after turning it on: it briefly broke Maya's "what should I focus on" feature entirely for a few minutes (a Notion setup detail I missed), then a second, quieter bug where it could count something toward your 3-a-day limit even if it was never actually shown to you. Both are fixed now and I double-checked the fix actually works.
+- [x] Cleaned up 3 fake entries my own testing left in your Notion Task Log — they're marked as test artifacts now, not real assignments, so they won't unfairly eat into today's 3.
+- [ ] Worth knowing: if you mark something done and then un-mark it later the same day, it still counts as one of your 3 for that day (it was still "assigned" to you, just not finished). Tell me if you'd rather it worked differently.
 
 ---
 
