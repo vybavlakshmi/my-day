@@ -85,3 +85,14 @@ Toggle behavior had to branch by source, since "done" means something different 
 Frontend also shows a small source tag (calendar/brain dump) on non-registry items now, so it's visible *why* something's suggested, not just that it is.
 
 Not yet live-verified — pushing now.
+
+## Frontend overhaul: conversation-first, dashboard demoted to context chips
+Direct feedback from Vybes after using the app: "explained a lot of things far and wide and I get a single page list" — wanted something closer to Jarvis, where the conversation *is* the interface. Confirmed root cause with her: the reasoning/conversational intelligence (commitment tracking, drift detection, schedule replanning) has been there all along, but the UI treated the dashboard cards as primary and chat as a small footnote bar — backwards from what she wanted.
+
+Rebuilt `public/index.html`'s structure (backend untouched, this is presentation-layer only):
+- **Conversation thread is now the main scrollable surface** — every exchange (both sides) appends as a message bubble, not a single popup that gets replaced. Was previously exactly one reply visible at a time.
+- **Commitment strip + focus card condensed into small chips/mini-list** above the thread — same functionality (parked-list tap-to-expand, focus-item tap-to-complete with the same source-aware toggle logic from the Calendar/Notion blend work), just visually demoted from full-width cards to a compact context row, since the conversation is the headline now.
+- **Maya "opens" the conversation on load** — composed client-side from already-fetched `/status` + `/focus` data (no extra API/Groq call, stays fast), so the first thing you see is her speaking first, not an empty input box waiting.
+- Semicircle, input bar, health pill, preparing-pulse — all mechanically unchanged, just repositioned around the new layout.
+
+This is a real visual overhaul, not a tweak — flagging clearly rather than treating it as routine. Not yet live-verified, pushing both this and the earlier Calendar/Notion blend together now.
