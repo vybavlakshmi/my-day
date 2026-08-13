@@ -85,11 +85,11 @@ app.post('/speak', async (req, res) => {
     audioStream.pipe(res);
     audioStream.on('error', err => {
       console.error('speak stream error:', err);
-      if (!res.headersSent) res.status(500).json({ error: String(err && (err.message || err)) });
+      if (!res.headersSent) res.status(500).json({ error: 'speech synthesis failed' });
     });
   } catch (err) {
     console.error('speak error:', err);
-    res.status(500).json({ error: String(err && (err.message || err)), name: err && err.name, stack: err && err.stack });
+    res.status(500).json({ error: 'speech synthesis failed' });
   }
 });
 

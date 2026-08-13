@@ -143,6 +143,20 @@
     font-size: 11px; font-weight: 600; color: var(--blue-1); background: #F3F8FF; border: none;
     border-radius: 999px; padding: 7px 13px; cursor: pointer;
   }
+
+  .reply-bubble {
+    position: fixed; bottom: 84px; left: 50%; transform: translateX(-50%) translateY(8px);
+    width: calc(100% - 44px); max-width: 396px; z-index: 4;
+    background: #fff; border: 1.5px solid var(--line); border-radius: 18px;
+    padding: 12px 16px; box-shadow: 0 10px 28px -14px rgba(28,43,54,0.35);
+    opacity: 0; pointer-events: none; transition: opacity 0.25s ease, transform 0.25s ease;
+  }
+  .reply-bubble.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+  .reply-bubble .reply-label {
+    font-family: 'Inter', sans-serif; font-size: 10px; font-weight: 600; letter-spacing: 0.5px;
+    text-transform: uppercase; color: var(--blue-1); margin-bottom: 4px;
+  }
+  .reply-bubble .reply-text { font-size: 14px; color: var(--ink); line-height: 1.4; }
 </style>
 </head>
 <body>
@@ -186,6 +200,11 @@
     <div class="semi" id="semi"></div>
     <div class="ripple r1"></div>
     <div class="ripple r2"></div>
+  </div>
+
+  <div class="reply-bubble" id="replyBubble">
+    <div class="reply-label">Maya</div>
+    <div class="reply-text" id="replyText"></div>
   </div>
 
   <div class="dock">
@@ -313,34 +332,54 @@
   }
   document.getElementById("demoBtn").addEventListener("click", () => startSpeaking(4200));
 
+  function showReply(text) {
+    document.getElementById("replyText").textContent = text;
+    document.getElementById("replyBubble").classList.add("show");
+  }
+
   async function handleSend() {
     const input = document.getElementById("msgInput");
     const text = input.value.trim();
     if (!text) return;
     input.value = "";
+
+    // /chat and /speak are handled separately on purpose — a voice failure must
+    // never hide the reply text again (that was the "goes into oblivion" bug).
+    let reply;
     try {
       const chatRes = await fetch("/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      const { reply } = await chatRes.json();
+      if (!chatRes.ok) throw new Error("chat failed");
+      ({ reply } = await chatRes.json());
+    } catch {
+      showReply("Sorry, that didn't go through — try again?");
+      return;
+    }
 
+    showReply(reply);
+    loadStatus(); // a commitment/drift/switch/completion may have changed
+    loadFocus();  // a schedule update may have changed the current window
+
+    try {
       const speakRes = await fetch("/speak", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text: reply }),
       });
+      if (!speakRes.ok) throw new Error("speak failed");
       const audioBlob = await speakRes.blob();
       const audio = new Audio(URL.createObjectURL(audioBlob));
       audio.addEventListener("loadedmetadata", () => startSpeaking((audio.duration || 4) * 1000));
       audio.addEventListener("ended", () => semi.classList.remove("speaking"));
       audio.play();
-
-      loadStatus(); // a commitment/drift/switch/completion may have changed
-      loadFocus();  // a schedule update may have changed the current window
     } catch {
-      startSpeaking(3500);
+      // Voice failed — the reply text is already showing, so this is a quiet
+      // degrade, not a silent one. Still breathe the semicircle briefly so
+      // there's some visual acknowledgment.
+      startSpeaking(3000);
     }
   }
   document.getElementById("sparkBtn").addEventListener("click", handleSend);
