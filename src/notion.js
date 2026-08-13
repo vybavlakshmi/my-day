@@ -292,6 +292,37 @@ async function getProjectsBuilds() {
   }));
 }
 
+// Completion tracking for Item Registry entries — logs each toggle to Task Log
+// (source: 'registry') rather than adding a new DB, reusing §6's extended schema.
+async function logRegistryDone(title, done) {
+  await logTaskEvent({ task: title, source: 'registry', status: done ? 'done' : 'given' });
+}
+
+// Titles whose MOST RECENT registry-source log entry today says 'done' — supports
+// toggling back and forth within the same day, not just a one-way mark.
+async function getTodayDoneRegistryTitles() {
+  const today = todayISO();
+  const res = await notion.databases.query({
+    database_id: TASK_LOG_DB,
+    filter: {
+      and: [
+        { property: 'Source', select: { equals: 'registry' } },
+        { property: 'Date', date: { equals: today } },
+      ],
+    },
+    sorts: [{ timestamp: 'created_time', direction: 'descending' }],
+    page_size: 100,
+  });
+  const latestStatusByTitle = new Map();
+  for (const page of res.results) {
+    const title = plainText(page.properties.Task.title);
+    if (!latestStatusByTitle.has(title)) {
+      latestStatusByTitle.set(title, page.properties.Status.select ? page.properties.Status.select.name : null);
+    }
+  }
+  return new Set([...latestStatusByTitle].filter(([, status]) => status === 'done').map(([title]) => title));
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -315,4 +346,6 @@ module.exports = {
   addCreativeWant,
   getCreativeWants,
   getProjectsBuilds,
+  logRegistryDone,
+  getTodayDoneRegistryTitles,
 };

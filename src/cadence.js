@@ -182,15 +182,18 @@ function inWindow(nowMin, startMin, endMin) {
   return nowMin >= startMin || nowMin <= endMin; // window crosses midnight
 }
 
-// Which of today's plan windows contains right now, if any.
+// Which of today's plan windows contains right now, if any. Falls back to the
+// default routine template when nobody's told Maya today's actual schedule yet —
+// previously this just returned null every day until the first schedule_update
+// message, which made the dashboard look empty/broken by default.
 async function getCurrentWindow() {
   const dayPlan = await notion.getDayPlan();
-  if (!dayPlan || !dayPlan.plan.length) return null;
+  const plan = (dayPlan && dayPlan.plan.length) ? dayPlan.plan : groq.DEFAULT_DAY_TEMPLATE;
   const now = new Date().toLocaleTimeString('en-GB', {
     timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
   });
   const nowMin = timeToMinutes(now);
-  return dayPlan.plan.find(w => inWindow(nowMin, timeToMinutes(w.start), timeToMinutes(w.end))) || null;
+  return plan.find(w => inWindow(nowMin, timeToMinutes(w.start), timeToMinutes(w.end))) || null;
 }
 
 function isDirectionSeeking(text) {
@@ -199,15 +202,19 @@ function isDirectionSeeking(text) {
 }
 
 // Picks up to `limit` Active registry items fitting the current window, protected
-// class first. No "already done recently" dedup yet — deferred, needs a completion-
-// tracking flow that doesn't exist until there's a UI or chat-based "mark done."
+// class first, excluding anything already marked done today — so completing one
+// naturally reveals the next (spec's "depth-one reveal"), instead of the same item
+// reappearing forever after every reload.
 async function getFocusItems(limit = 2) {
   const window = await getCurrentWindow();
   if (!window) return { windowName: null, items: [] };
 
-  const registry = await notion.getItemRegistry();
+  const [registry, doneToday] = await Promise.all([
+    notion.getItemRegistry(),
+    notion.getTodayDoneRegistryTitles(),
+  ]);
   const wantedFit = WINDOW_FIT_MAP[window.windowFit];
-  const active = registry.filter(item => item.status === 'Active');
+  const active = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
   const candidates = window.windowFit === 'any'
     ? active
     : active.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));

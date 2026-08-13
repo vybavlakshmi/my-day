@@ -157,6 +157,18 @@
     text-transform: uppercase; color: var(--blue-1); margin-bottom: 4px;
   }
   .reply-bubble .reply-text { font-size: 14px; color: var(--ink); line-height: 1.4; }
+  .reply-bubble .you-line {
+    font-size: 12.5px; color: var(--soft); line-height: 1.4; margin-bottom: 8px;
+    padding-bottom: 8px; border-bottom: 1px dashed var(--line);
+  }
+  .reply-bubble .you-line .you-label { font-weight: 600; color: #8FA3B0; }
+
+  .semi.preparing { animation: prep-pulse 1.1s ease-in-out infinite; }
+  @keyframes prep-pulse {
+    0%,100% { opacity: 1; }
+    50% { opacity: 0.6; }
+  }
+  @media (prefers-reduced-motion: reduce) { .semi.preparing { animation: none; } }
 </style>
 </head>
 <body>
@@ -203,6 +215,7 @@
   </div>
 
   <div class="reply-bubble" id="replyBubble">
+    <div class="you-line" id="youLine" style="display:none"><span class="you-label">You:</span> <span id="youText"></span></div>
     <div class="reply-label">Maya</div>
     <div class="reply-text" id="replyText"></div>
   </div>
@@ -290,14 +303,27 @@
       return;
     }
     box.innerHTML = items.map(it => `
-      <div class="task">
+      <div class="task" data-title="${it.title.replace(/"/g, "&quot;")}">
         <span class="tick"></span><span>${it.title}</span>
         ${it.class === "Protected" ? '<span class="protected-flag">protected</span>' : ""}
       </div>`).join("");
-    // Visual toggle only — no persistence yet, see NOTES.md (§4's "already done" dedup
-    // is the same underlying gap: no completion-tracking exists for registry items).
+    // Marking done persists (Task Log, source: registry) and immediately reloads
+    // the list — a completed item is excluded server-side, so the next candidate
+    // takes its place. This is the "depth-one reveal" from the spec.
     document.querySelectorAll("#focusList .task").forEach(t => {
-      t.addEventListener("click", () => t.classList.toggle("done"));
+      t.addEventListener("click", async () => {
+        t.classList.add("done"); // optimistic, reload will confirm/replace shortly
+        try {
+          await fetch("/focus/toggle", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ title: t.dataset.title, done: true }),
+          });
+        } catch {
+          // reload below will just show the same item again if this failed
+        }
+        loadFocus();
+      });
     });
   }
 
@@ -332,8 +358,17 @@
   }
   document.getElementById("demoBtn").addEventListener("click", () => startSpeaking(4200));
 
-  function showReply(text) {
-    document.getElementById("replyText").textContent = text;
+  // Shows what you typed alongside Maya's reply, so your own message never just
+  // vanishes — previously only Maya's side of the exchange was ever visible.
+  function showReply(youText, mayaText) {
+    const youLine = document.getElementById("youLine");
+    if (youText) {
+      document.getElementById("youText").textContent = youText;
+      youLine.style.display = "block";
+    } else {
+      youLine.style.display = "none";
+    }
+    document.getElementById("replyText").textContent = mayaText;
     document.getElementById("replyBubble").classList.add("show");
   }
 
@@ -355,14 +390,19 @@
       if (!chatRes.ok) throw new Error("chat failed");
       ({ reply } = await chatRes.json());
     } catch {
-      showReply("Sorry, that didn't go through — try again?");
+      showReply(text, "Sorry, that didn't go through — try again?");
       return;
     }
 
-    showReply(reply);
+    showReply(text, reply);
     loadStatus(); // a commitment/drift/switch/completion may have changed
     loadFocus();  // a schedule update may have changed the current window
 
+    // Voice generation takes real time (a network round-trip + synthesis), so
+    // there's a genuine gap between the text appearing and audio starting. Without
+    // any visual cue during that gap it read as broken/glitchy, not intentional —
+    // this subtle pulse says "still working on it" instead of leaving dead air.
+    semi.classList.add("preparing");
     try {
       const speakRes = await fetch("/speak", {
         method: "POST",
@@ -372,13 +412,17 @@
       if (!speakRes.ok) throw new Error("speak failed");
       const audioBlob = await speakRes.blob();
       const audio = new Audio(URL.createObjectURL(audioBlob));
-      audio.addEventListener("loadedmetadata", () => startSpeaking((audio.duration || 4) * 1000));
+      audio.addEventListener("loadedmetadata", () => {
+        semi.classList.remove("preparing");
+        startSpeaking((audio.duration || 4) * 1000);
+      });
       audio.addEventListener("ended", () => semi.classList.remove("speaking"));
       audio.play();
     } catch {
       // Voice failed — the reply text is already showing, so this is a quiet
       // degrade, not a silent one. Still breathe the semicircle briefly so
       // there's some visual acknowledgment.
+      semi.classList.remove("preparing");
       startSpeaking(3000);
     }
   }

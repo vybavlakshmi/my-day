@@ -56,6 +56,16 @@ app.get('/focus', async (req, res) => {
   }
 });
 
+app.post('/focus/toggle', async (req, res) => {
+  try {
+    const { title, done } = req.body;
+    await notion.logRegistryDone(title, done);
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 app.post('/chat', async (req, res) => {
   try {
     const reply = await cadence.handleChat(req.body.text);
