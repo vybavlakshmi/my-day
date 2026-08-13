@@ -67,3 +67,21 @@ NOT an IP-blocking issue (ruled that theory out per Vybes' request before acting
 4. **Completion-tracking built** (the deferred piece from §4/§9, now actually done): new `POST /focus/toggle` logs to Task Log (`source: 'registry'`, reusing §6's schema) when a focus-card item is marked done. `getFocusItems()` now excludes anything logged done *today* before picking the top 1-2 — so completing an item makes the next one surface, matching spec's "depth-one reveal," and the state survives reloads. Tracking is per-day only (resets naturally the next calendar day since it's a fresh Task Log query on `todayISO()`) — doesn't yet respect weekly/monthly cadence (a weekly item marked done will reappear tomorrow, not stay hidden all week). That refinement not built — flag if it matters in practice.
 
 **Verified live:** chat log shows your typed message correctly; default-schedule fallback confirmed (`/focus` returned a real window + 2 real Item Registry items with zero chat interaction that day); completion persistence confirmed via toggle-then-refetch (marked "Laundry" done, it stayed excluded across repeated fetches, "Prepare & feed mother" surfaced as the replacement — matches spec's depth-one reveal). Preparing-pulse logic is present and does activate, but exact visual timing wasn't cleanly confirmed via automated headless clicking (audio autoplay behaves differently for programmatic clicks vs real ones) — worth Vybes confirming directly in her own browser.
+
+## Focus surface now blends Calendar + Notion open tasks, not just Item Registry
+Real gap Vybes caught: the adaptive surface only ever pulled from Item Registry, even though the backend has always had Calendar and Notion open-tasks fully wired (just not fed into this specific selection). Fixed per her confirmed priority order:
+1. **Calendar events happening now-ish** (ongoing, or starting within the next hour) — highest priority, since they're time-fixed and can't be rescheduled by choice the way everything else can.
+2. **Item Registry, protected class first** (as before).
+3. **Item Registry, negotiable.**
+4. **Notion open tasks** (brain dump) — lowest priority fill.
+
+`calendar.js`'s `getTodayEvents()` now returns `start`/`end` too (was title-only before — needed to know if something's actually happening *now*, not just sometime today).
+
+Toggle behavior had to branch by source, since "done" means something different for each:
+- registry → Task Log persistence (as before)
+- notion → ticks the real Notion checkbox (`/task/toggle`, same mechanism the old brain-dump card used)
+- calendar → visual-only, no persistence — a calendar event isn't something this app marks "done," it just happens or doesn't
+
+Frontend also shows a small source tag (calendar/brain dump) on non-registry items now, so it's visible *why* something's suggested, not just that it is.
+
+Not yet live-verified — pushing now.

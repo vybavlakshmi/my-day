@@ -201,25 +201,55 @@ function isDirectionSeeking(text) {
   return DIRECTION_PHRASES.some(p => lower.includes(p));
 }
 
-// Picks up to `limit` Active registry items fitting the current window, protected
-// class first, excluding anything already marked done today — so completing one
-// naturally reveals the next (spec's "depth-one reveal"), instead of the same item
-// reappearing forever after every reload.
+// A calendar event counts as "now-ish" if it's ongoing, or starts within the next
+// hour — time-fixed commitments outrank everything else since they can't just be
+// rescheduled by choice the way a registry item or brain-dump task can.
+function isEventNowish(event, now) {
+  if (!event.start) return false;
+  const start = new Date(event.start);
+  if (Number.isNaN(start.getTime())) return false;
+  const end = event.end ? new Date(event.end) : new Date(start.getTime() + 30 * 60000);
+  const soonWindow = new Date(start.getTime() - 60 * 60000);
+  return now >= soonWindow && now <= end;
+}
+
+// Picks up to `limit` items for the current window, blended from 3 sources —
+// Calendar (time-fixed, highest priority), Item Registry (protected before
+// negotiable, excluding anything done today so completing one reveals the next —
+// spec's "depth-one reveal"), and open Notion tasks (lowest priority fill).
 async function getFocusItems(limit = 2) {
   const window = await getCurrentWindow();
   if (!window) return { windowName: null, items: [] };
 
-  const [registry, doneToday] = await Promise.all([
+  const [registry, doneToday, calendarResult, notionResult] = await Promise.all([
     notion.getItemRegistry(),
     notion.getTodayDoneRegistryTitles(),
+    calendar.getTodayEvents().catch(err => { console.error('focus calendar fetch failed:', err.message); return []; }),
+    notion.getOpenTasks(3).catch(err => { console.error('focus notion fetch failed:', err.message); return []; }),
   ]);
-  const wantedFit = WINDOW_FIT_MAP[window.windowFit];
-  const active = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
-  const candidates = window.windowFit === 'any'
-    ? active
-    : active.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
 
-  candidates.sort((a, b) => (a.class === 'Protected' ? -1 : 0) - (b.class === 'Protected' ? -1 : 0));
+  const now = new Date();
+  const calendarCandidates = calendarResult
+    .filter(e => isEventNowish(e, now))
+    .map(e => ({ title: e.title, class: 'Protected', source: 'calendar' }));
+
+  const wantedFit = WINDOW_FIT_MAP[window.windowFit];
+  const activeRegistry = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
+  const registryCandidates = (window.windowFit === 'any'
+    ? activeRegistry
+    : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'))
+  ).map(item => ({ title: item.title, class: item.class, source: 'registry' }));
+
+  const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
+
+  const priorityRank = c => {
+    if (c.source === 'calendar') return 0;
+    if (c.source === 'registry' && c.class === 'Protected') return 1;
+    if (c.source === 'registry') return 2;
+    return 3;
+  };
+  const candidates = [...calendarCandidates, ...registryCandidates, ...notionCandidates]
+    .sort((a, b) => priorityRank(a) - priorityRank(b));
 
   return { windowName: window.name, items: candidates.slice(0, limit) };
 }

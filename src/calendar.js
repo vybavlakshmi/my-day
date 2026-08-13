@@ -26,6 +26,8 @@ async function getTodayEvents() {
   return (res.data.items || []).map(event => ({
     title: event.summary || '(untitled event)',
     done: false,
+    start: event.start ? (event.start.dateTime || event.start.date) : null,
+    end: event.end ? (event.end.dateTime || event.end.date) : null,
   }));
 }
 

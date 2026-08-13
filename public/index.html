@@ -302,23 +302,42 @@
       box.innerHTML = '<div class="empty">Nothing specific queued right now.</div>';
       return;
     }
+    const sourceLabel = { calendar: "calendar", notion: "brain dump" };
     box.innerHTML = items.map(it => `
-      <div class="task" data-title="${it.title.replace(/"/g, "&quot;")}">
+      <div class="task" data-title="${it.title.replace(/"/g, "&quot;")}" data-source="${it.source}" data-id="${it.id || ""}">
         <span class="tick"></span><span>${it.title}</span>
         ${it.class === "Protected" ? '<span class="protected-flag">protected</span>' : ""}
+        ${sourceLabel[it.source] ? `<span class="protected-flag" style="color:var(--soft);background:#F4F8FB">${sourceLabel[it.source]}</span>` : ""}
       </div>`).join("");
-    // Marking done persists (Task Log, source: registry) and immediately reloads
-    // the list — a completed item is excluded server-side, so the next candidate
-    // takes its place. This is the "depth-one reveal" from the spec.
+    // Toggle behavior differs by where the item actually came from:
+    // - registry: persists via Task Log (source: registry) + reloads, revealing the
+    //   next candidate — the "depth-one reveal" from the spec.
+    // - notion: ticks the REAL Notion checkbox (same mechanism as the old brain-dump
+    //   card had), then reloads.
+    // - calendar: visual only — a calendar event isn't something this app marks
+    //   "done," it just happens or doesn't.
     document.querySelectorAll("#focusList .task").forEach(t => {
       t.addEventListener("click", async () => {
+        const source = t.dataset.source;
+        if (source === "calendar") {
+          t.classList.toggle("done");
+          return;
+        }
         t.classList.add("done"); // optimistic, reload will confirm/replace shortly
         try {
-          await fetch("/focus/toggle", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ title: t.dataset.title, done: true }),
-          });
+          if (source === "notion") {
+            await fetch("/task/toggle", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ source: "notion", id: t.dataset.id, done: true }),
+            });
+          } else {
+            await fetch("/focus/toggle", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ title: t.dataset.title, done: true }),
+            });
+          }
         } catch {
           // reload below will just show the same item again if this failed
         }
