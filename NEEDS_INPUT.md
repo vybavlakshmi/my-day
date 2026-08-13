@@ -7,8 +7,8 @@ Questions blocked on her, logged with enough context to answer without re-readin
 ## 1. `item_registry.csv` doesn't exist
 You referenced this as an attached file when kicking off the autonomous build. It's not present anywhere in the working directory (checked). Not a blocker — the live Notion "Item Registry" database is already built, populated with your real ~60 items, connected to the integration, and fully wired into the app. If the CSV was meant to be a *different* or *updated* source, let me know and I'll reconcile; otherwise no action needed.
 
-## 2. Roadmap (dated milestones)
-Spec §7 lists this as needed for the §9 milestone countdown ("127 days until first Effie submission"-style), explicitly noting it's "not yet built by Vybes." Needed: your dated milestones (first post → Effie → conglomerate, or whatever the current real sequence is). Until this exists, the milestone bar in §9 will render a neutral "no roadmap set" state instead of a countdown — not blocking the rest of §9.
+## 2. Roadmap (dated milestones) — RESOLVED 2026-08-13, this existed already
+Turned out these already exist in far more developed form than the spec implied: **TVC Milestone Roadmap — 2026 → 2031** (dated, tracked, tiered [C]/[P]/[D]) plus The Map's phase structure. What's still actually open is not "does the data exist" but "how should it surface in Maya" — moved to `FOR_VYBES_REVIEW.md`'s decisions-needed section rather than left here, since it's now a design question, not a missing-data one.
 
 ## 3. Relationship map
 Spec §7: "close people + how to communicate with them (definition pending from Vybes)." Needed: who counts as close people for this, and what "how to communicate with them" should actually capture (tone preferences? contact frequency? something else?) — the spec flags the definition itself as undecided, not just the data. Not blocking anything else in the current build order.
