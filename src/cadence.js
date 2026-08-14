@@ -252,13 +252,25 @@ async function getFocusItems(limit = 2) {
   const registryCandidates = fitFilteredRegistry.map(item => ({ title: item.title, class: item.class, source: 'registry' }));
   const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
 
+  // A day-specific Notion plan can carry its own instruction for the current window (e.g.
+  // "Product — Define what it is") on `window.detail`, set for 'business*'-named windows
+  // in the reworked Aug schedule. Surfaced as a candidate so the specific task actually
+  // reaches Vybes instead of just a generic "business" label. Treated as Protected
+  // (exempt from the 3/day cap) — it's a pre-committed plan block, not a new assignment
+  // Maya is inventing. DEFAULT_DAY_TEMPLATE windows never carry `detail`, so this is a
+  // no-op on days without a specific plan loaded.
+  const scheduleCandidates = (window.detail && window.name.startsWith('business'))
+    ? [{ title: window.detail, class: 'Protected', source: 'schedule' }]
+    : [];
+
   const priorityRank = c => {
     if (c.source === 'calendar') return 0;
-    if (c.source === 'registry' && c.class === 'Protected') return 1;
-    if (c.source === 'registry') return 2;
-    return 3;
+    if (c.source === 'schedule') return 1;
+    if (c.source === 'registry' && c.class === 'Protected') return 2;
+    if (c.source === 'registry') return 3;
+    return 4;
   };
-  const allCandidates = [...calendarCandidates, ...registryCandidates, ...notionCandidates]
+  const allCandidates = [...calendarCandidates, ...scheduleCandidates, ...registryCandidates, ...notionCandidates]
     .sort((a, b) => priorityRank(a) - priorityRank(b));
 
   // Titles already counted toward today's discretionary cap — a 'done' entry implies the

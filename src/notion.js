@@ -193,6 +193,21 @@ function todayISO() {
   return new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
 }
 
+// A day's Plan JSON can run longer than Notion's ~2000-char single rich_text block, so
+// it's spread across Plan/Plan2/Plan3 (added 2026-08-14 for the detailed 19-day rework —
+// a plain default-template day never needs more than Plan). CHUNK_SIZE leaves headroom
+// under the real limit; PLAN_FIELDS caps total capacity at 3×1900 ≈ 5700 chars — if a
+// plan ever needs more than that, this silently drops the tail, so keep an eye on it if
+// day-plans get meaningfully bigger than the current ~57-window/day shape.
+const PLAN_FIELDS = ['Plan', 'Plan2', 'Plan3'];
+const PLAN_CHUNK_SIZE = 1900;
+
+function chunkString(str, size) {
+  const chunks = [];
+  for (let i = 0; i < str.length; i += size) chunks.push(str.slice(i, i + size));
+  return chunks;
+}
+
 // Today's schedule, if Maya has planned/replanned it at least once today. One row
 // per calendar day (not a strict singleton) — updated in place through the day,
 // naturally leaving a history of past days' plans once a new day starts.
@@ -206,7 +221,10 @@ async function getDayPlan() {
   if (!res.results.length) return null;
   const page = res.results[0];
   try {
-    return { id: page.id, plan: JSON.parse(plainText(page.properties.Plan.rich_text)) };
+    const joined = PLAN_FIELDS
+      .map(f => (page.properties[f] ? plainText(page.properties[f].rich_text) : ''))
+      .join('');
+    return { id: page.id, plan: JSON.parse(joined) };
   } catch {
     return { id: page.id, plan: [] };
   }
@@ -215,11 +233,14 @@ async function getDayPlan() {
 async function setDayPlan(plan) {
   const today = todayISO();
   const existing = await getDayPlan();
+  const chunks = chunkString(JSON.stringify(plan), PLAN_CHUNK_SIZE);
   const properties = {
     Date: { title: [{ text: { content: today } }] },
     Day: { date: { start: today } },
-    Plan: { rich_text: [{ text: { content: JSON.stringify(plan) } }] },
   };
+  PLAN_FIELDS.forEach((field, i) => {
+    properties[field] = { rich_text: chunks[i] ? [{ text: { content: chunks[i] } }] : [] };
+  });
   if (existing) {
     await notion.pages.update({ page_id: existing.id, properties });
   } else {
