@@ -32,8 +32,8 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 ---
 
 ## Picking back up next session
-- [ ] Make the day-template live (just needs your yes, I'll handle the rest).
-- [ ] Load the 19 days of specific business tasks into Maya's actual daily suggestions, and start the milestone bar — bigger job, paused for tonight at your call.
+- [x] Day-template is live (2026-08-14) — pushed and checked myself: Maya's live window-picking now matches your new schedule (confirmed via a real request, correctly landed on "laundry_fold" at the right time).
+- [ ] Load the 19 days of specific business tasks into Maya's actual daily suggestions, and start the milestone bar — bigger job, still pending.
 
 ---
 
