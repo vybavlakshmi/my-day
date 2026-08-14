@@ -33,7 +33,8 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 ## Picking back up next session
 - [x] Day-template is live (2026-08-14) — pushed and checked myself: Maya's live window-picking now matches your new schedule (confirmed via a real request, correctly landed on "laundry_fold" at the right time).
-- [ ] Load the 19 days of specific business tasks into Maya's actual daily suggestions, and start the milestone bar — bigger job, still pending.
+- [~] Loading the 19 days of specific business tasks into Maya's actual daily suggestions — **in progress 2026-08-14.** Your day-by-day plan (Aug 13–31) is now stored in Notion's Day Schedule, one row per day, so Maya can look up each day's real business instructions instead of a generic label. Code is written and committed (held for review, not pushed) to actually surface those instructions when a business window comes up. Not yet confirmed live — check back or ask me for status.
+- [ ] Start the milestone bar — still pending, needs the corrected Phase 1 clock (25 July, not Sept 1) wired in.
 
 ---
 
