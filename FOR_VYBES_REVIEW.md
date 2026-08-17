@@ -8,13 +8,13 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 Re-read Life Truth, Current Truth, The Map, Phase 1 — Zoomed In first, per the standing rule. Nothing changed since last session — all still consistent with what `CLAUDE.md` already has recorded.
 
-**Both held features are verified ready to push** — I checked the actual code and cross-checked against your real live Notion data, not just re-read my own old notes:
-- [ ] **Task-title display** — confirmed today's real Day Schedule entry (17 Aug) already has real `detail` text on the business windows (e.g. "Ganapathi/CavinKare, no-ask rewarm..."), so once pushed you'll immediately see your actual task instead of a generic "business" label.
-- [ ] **Milestone bar** — confirmed it's backend-only; the dashboard already knows how to display it, nothing on your screen changes shape, just the top bar starts showing real "Day N of Phase 1 · next: ..." text instead of blank.
-- Both are additive and don't touch existing behavior. **Waiting on your one-word yes to actually push them** — see the question in chat.
-- Side note, not urgent: local git history and the live server's history have quietly diverged (harmless — content is identical, just different commit hashes from earlier "history surgery" already logged last session). This will get cleaned up automatically the next time I push; no action needed from you.
+**Both held features: pushed, verified live 2026-08-17.**
+- [x] **Task-title display** — live. Confirmed via real data: today's Day Schedule entry already has real `detail` text on business windows, so you'll see your actual task instead of a generic "business" label.
+- [x] **Milestone bar** — live. Confirmed via `/status`: shows "Day 23 · Phase 1 · next: New product launch (reworked Aug plan), 15 days (1 Sept)".
+- **Found and fixed something along the way:** `/status` (which both of the above depend on) was silently 500ing in production — the "Parked Threads" Notion database had been trashed (most likely accidentally, while clearing the fake "competitor pricing" test row a past session left there — deleting a row vs. the whole database is an easy mix-up in Notion's sidebar). You've since restored it yourself and it's confirmed working again. One loose end: `/status` currently shows `activeCommitment: "quick test"` — looks like leftover from testing the restore, not a real commitment. Say the word if you want it cleared.
 
-**Found a real design snag before carry-forward can be built, not just a formatting one.** The original carry-forward plan was "Maya edits tomorrow's entry on Phase 1 — Zoomed In." But that page's day-by-day prose was deliberately stopped being the source of truth on 2026-08-13 (that's the edit already marked done below) — the thing that actually feeds Maya's suggestions now is the structured Day Schedule database in Notion, not that prose page. Editing the Zoomed In page's wording wouldn't actually change what Maya suggests you do tomorrow; editing the Day Schedule's `detail` field would. **This is a real fork, not something I should just pick for you** — flagged as a question in chat rather than guessed.
+**Carry-forward design decision — made 2026-08-17:** you chose Phase 1 — Zoomed In prose as the edit target (not the Day Schedule DB, even though that's what actually drives Maya's suggestions). That means carry-forward will keep this page's narrative honest, but on its own won't change what Maya suggests tomorrow — worth remembering if it ever feels like carry-forward "isn't doing anything" day-to-day.
+- [ ] **Blocking step, drafted and sent to you as a file, not yet written to Notion:** the corrected Aug 13–31 day-by-day THINK/HANDS content for this page (Aug 10–12 left untouched — those days already happened under the old plan). Once you confirm it's right, I'll write it, and only then start building the actual carry-forward chat flow on top of it.
 
 ---
 
