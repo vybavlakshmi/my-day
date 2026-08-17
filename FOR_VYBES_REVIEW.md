@@ -34,13 +34,17 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 ## Picking back up next session
 - [x] Day-template is live — your final version (5am start, no `feed_mom`, two business streams). Pushed and verified with a real request.
 - [~] **Held, not pushed, on your instruction:** the feature that makes Maya show your actual written task ("Product — Define what it is") instead of a generic "business" label. The data side is done — all 19 days (Aug 13–31) are loaded into Notion. The code that displays it is written and committed, just waiting for your go-ahead to push.
-- [ ] Start the milestone bar — still pending, needs the corrected Phase 1 clock (25 July, not Sept 1) wired in.
+- [~] **Milestone bar — built, held, not pushed.** Shows "Day N of Phase 1" + the nearest upcoming milestone from a short hand-picked list (not the full roadmap — deliberately skips anything still tied to the dead MOO plan). Display only so far; doesn't yet change what Maya suggests day to day (that was the second half of the original ask, not started).
+- [ ] **Carry-forward feature — NOT started, still being designed, nothing built.** What you want: when you tell Maya something's unfinished, she asks to edit tomorrow's entry on Phase 1 — Zoomed In, shows you the exact rewritten text, and only edits Notion after you approve. **Open question, unresolved:** the page's August section currently has stale entries in the old THINK/HANDS format (built around the dead MOO plan, same style as your screenshot). Before building carry-forward, these need correcting to match your real Aug 13–31 plan, in that same format — I drafted an example and was waiting on your go-ahead to write it when this session paused. **I will not touch that page without showing you the exact edit first and getting a yes** — this was explicitly corrected once already this session, don't skip it.
 
-**One thing worth knowing:** the two day-template pushes today happened out of order with some other held changes, so I did a bit of git surgery behind the scenes to push only what you asked for each time (nothing risky — no data was touched, just how the code history is arranged). If you ever want the held task-detail feature pushed too, just say so and I'll fold everything together cleanly at that point.
+**One thing worth knowing:** the day-template pushes happened out of order with some other held changes, so some git history surgery happened behind the scenes to push only what was asked each time (nothing risky — no data was touched, just how the code history is arranged). If a fresh session picks this up, `git log` will show a few small housekeeping commits; nothing there needs explaining unless asked.
+
+**A mistake worth knowing about, for whoever picks this up:** mid-session, Claude told Vybes the Zoomed In page's August section "has no day-by-day entries at all" — wrong; it has real entries, just in the old MOO-era THINK/HANDS format, marked historical. Caught and corrected by Vybes. Lesson: verify document content directly before describing it, don't state from memory of an earlier edit.
 
 ---
 
 ## Background (no action — for context only)
-- Nothing was pushed this session; code + doc commits are bundled together locally.
+- Nothing was pushed this session except: (1) the final day-template, (2) the day-specific Notion data load (Aug 13–31) — both explicitly requested and verified live. Everything else is committed locally, held.
 - `NEEDS_INPUT.md` #2 (roadmap milestones) is marked resolved — the data exists now; the real open question moved to Decisions above.
 - `CLAUDE.md` and new `KNOWLEDGE_TRANSFER_v8.md` are updated to reflect everything read this session.
+- Ground rules confirmed this session, still in force: Notion writes need explicit per-edit sign-off (not blanket permission), especially for Phase 1 — Zoomed In and The Map specifically — always state the exact edit before making it.
