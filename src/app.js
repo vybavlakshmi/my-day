@@ -7,6 +7,7 @@ const healthRouter = require('./health');
 const cadence = require('./cadence');
 const notion = require('./notion');
 const maya = require('./maya');
+const milestones = require('./milestones');
 
 const app = express();
 app.use(express.json());
@@ -31,7 +32,7 @@ app.get('/status', async (req, res) => {
     res.json({
       activeCommitment: activeCommitment ? activeCommitment.commitment : null,
       parkedCount: parked.length,
-      milestone: null, // stubbed — no Roadmap data source exists yet, see NEEDS_INPUT.md
+      milestone: milestones.getMilestoneStatus().display,
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
