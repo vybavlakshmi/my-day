@@ -17,7 +17,7 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 - [x] **Milestone surfacing** — confirmed: milestone bar on screen, and upcoming milestones actively shape what Maya suggests day to day (not just separate pop-ups).
 - [x] **Which "Day 0" clock** — **corrected 2026-08-14**: you caught my mistake — Phase 1 stays on its original clock (Day 0 = 25 July 2026, so today is Day 20). 1 Sept is a target date for the new product launch, not a new Day-1 reset. Milestone bar will build against the original Phase 1 clock.
-- [x] **`DEFAULT_DAY_TEMPLATE` accuracy** — done, built from your updated table (5 shorter business slots through the day instead of one 30-min evening block, cardio blocks added). Held for your review before going live, same as the capacity cap.
+- [x] **`DEFAULT_DAY_TEMPLATE` accuracy** — done. You sent an update twice today; the **second, final version is live** (5am start, no `feed_mom` windows — batch-prepped snacks instead — business time spread ~5h20m across two streams). Pushed and confirmed working.
 - [ ] *(No action needed, just confirming)* — I built the capacity-cap code on the reading that Life Truth sets the daily ceiling and The Map's business priority only decides what fills it. Flag me if that's wrong.
 
 ---
@@ -32,9 +32,11 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 ---
 
 ## Picking back up next session
-- [x] Day-template is live (2026-08-14) — pushed and checked myself: Maya's live window-picking now matches your new schedule (confirmed via a real request, correctly landed on "laundry_fold" at the right time).
-- [~] Loading the 19 days of specific business tasks into Maya's actual daily suggestions — **in progress 2026-08-14.** Your day-by-day plan (Aug 13–31) is now stored in Notion's Day Schedule, one row per day, so Maya can look up each day's real business instructions instead of a generic label. Code is written and committed (held for review, not pushed) to actually surface those instructions when a business window comes up. Not yet confirmed live — check back or ask me for status.
+- [x] Day-template is live — your final version (5am start, no `feed_mom`, two business streams). Pushed and verified with a real request.
+- [~] **Held, not pushed, on your instruction:** the feature that makes Maya show your actual written task ("Product — Define what it is") instead of a generic "business" label. The data side is done — all 19 days (Aug 13–31) are loaded into Notion. The code that displays it is written and committed, just waiting for your go-ahead to push.
 - [ ] Start the milestone bar — still pending, needs the corrected Phase 1 clock (25 July, not Sept 1) wired in.
+
+**One thing worth knowing:** the two day-template pushes today happened out of order with some other held changes, so I did a bit of git surgery behind the scenes to push only what you asked for each time (nothing risky — no data was touched, just how the code history is arranged). If you ever want the held task-detail feature pushed too, just say so and I'll fold everything together cleanly at that point.
 
 ---
 
