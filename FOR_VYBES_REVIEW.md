@@ -1,6 +1,20 @@
-# For Vybes — to-do (session 2026-08-13)
+# For Vybes — to-do (session 2026-08-13, updated 2026-08-17)
 
 Checklist version — check items off as you go. Full context/reasoning for anything here lives in `KNOWLEDGE_TRANSFER_v8.md` and `CLAUDE.md` if you want the long version; this file stays short on purpose.
+
+---
+
+## Session 3 (2026-08-17) — what I checked before doing anything
+
+Re-read Life Truth, Current Truth, The Map, Phase 1 — Zoomed In first, per the standing rule. Nothing changed since last session — all still consistent with what `CLAUDE.md` already has recorded.
+
+**Both held features are verified ready to push** — I checked the actual code and cross-checked against your real live Notion data, not just re-read my own old notes:
+- [ ] **Task-title display** — confirmed today's real Day Schedule entry (17 Aug) already has real `detail` text on the business windows (e.g. "Ganapathi/CavinKare, no-ask rewarm..."), so once pushed you'll immediately see your actual task instead of a generic "business" label.
+- [ ] **Milestone bar** — confirmed it's backend-only; the dashboard already knows how to display it, nothing on your screen changes shape, just the top bar starts showing real "Day N of Phase 1 · next: ..." text instead of blank.
+- Both are additive and don't touch existing behavior. **Waiting on your one-word yes to actually push them** — see the question in chat.
+- Side note, not urgent: local git history and the live server's history have quietly diverged (harmless — content is identical, just different commit hashes from earlier "history surgery" already logged last session). This will get cleaned up automatically the next time I push; no action needed from you.
+
+**Found a real design snag before carry-forward can be built, not just a formatting one.** The original carry-forward plan was "Maya edits tomorrow's entry on Phase 1 — Zoomed In." But that page's day-by-day prose was deliberately stopped being the source of truth on 2026-08-13 (that's the edit already marked done below) — the thing that actually feeds Maya's suggestions now is the structured Day Schedule database in Notion, not that prose page. Editing the Zoomed In page's wording wouldn't actually change what Maya suggests you do tomorrow; editing the Day Schedule's `detail` field would. **This is a real fork, not something I should just pick for you** — flagged as a question in chat rather than guessed.
 
 ---
 
