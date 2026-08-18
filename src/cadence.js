@@ -159,7 +159,7 @@ async function handleChat(text) {
       const taskName = classification.extracted || text;
       const dayNumber = milestones.getMilestoneStatus().dayNumber;
       const tomorrowDay = dayNumber + 1;
-      await notion.logTaskEvent({
+      const logId = await notion.logTaskEvent({
         task: taskName, source: 'carry_forward', status: 'pending',
         detail: `Carry from Day ${dayNumber} to Day ${tomorrowDay}`,
       });
@@ -177,6 +177,7 @@ async function handleChat(text) {
             fromDay: dayNumber,
             toDay: tomorrowDay,
             currentEntry: entry.text,
+            logId,
           },
         };
       }

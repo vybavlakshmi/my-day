@@ -88,7 +88,8 @@ async function logTaskEvent({ task, source, status, date, detail }) {
     Date: { date: { start: date || todayISO() } },
   };
   if (detail) properties.Detail = { rich_text: [{ text: { content: detail } }] };
-  await notion.pages.create({ parent: { database_id: TASK_LOG_DB }, properties });
+  const page = await notion.pages.create({ parent: { database_id: TASK_LOG_DB }, properties });
+  return page.id;
 }
 
 // The one open commitment right now — a singleton row, updated in place rather than

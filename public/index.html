@@ -446,7 +446,7 @@
       try {
         await fetch("/carry-forward", {
           method: "POST", headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ parentId: cf.parentId, afterBlockId: cf.afterBlockId, taskName: cf.taskName, fromDay: cf.fromDay }),
+          body: JSON.stringify({ parentId: cf.parentId, afterBlockId: cf.afterBlockId, taskName: cf.taskName, fromDay: cf.fromDay, logId: cf.logId }),
         });
         card.innerHTML = '<div class="cf-label">Done</div><div class="cf-task">Added to Phase 1 — Zoomed In.</div>';
       } catch { card.innerHTML = '<div class="cf-label">Failed</div><div class="cf-task">Couldn\'t write — try again later.</div>'; }

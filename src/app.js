@@ -84,8 +84,9 @@ app.post('/chat', async (req, res) => {
 
 app.post('/carry-forward', async (req, res) => {
   try {
-    const { parentId, afterBlockId, taskName, fromDay } = req.body;
+    const { parentId, afterBlockId, taskName, fromDay, logId } = req.body;
     await notion.appendCarryForwardBlock(parentId, afterBlockId, taskName, fromDay);
+    if (logId) await notion.resolveCarryForward(logId, 'done').catch(() => {});
     res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
