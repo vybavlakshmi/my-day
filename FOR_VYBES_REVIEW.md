@@ -40,9 +40,12 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 - [ ] **Write reallocated Aug 18–31 schedule to Notion** — the draft is ready (exact per-day entries, tasks from Aug 13-17 redistributed, no compression). Say "go" and I'll write it to Phase 1 — Zoomed In, replacing all old August content.
 - [ ] **Clear "quick test" active commitment** — leftover from your Parked Threads restore testing. Say the word.
 
-### Blocked on you (no rush):
+**6. Treatment-period filter** (`cadence.js`)
+- Now that Domain is populated on all 62 rows, `getFocusItems()` blocks Relationships-domain items during treatment (Life Truth: no community/networking/social commitments). Items with domain "Relationships" will never be suggested by Maya.
 
-- **Item Registry Domain field** — empty on all 62 rows. Milestone-driven suggestions will work better once domains are populated (Maya can match items to milestone tracks).
+### Resolved this session:
+
+- **Item Registry Domain field** — checked, all 62 rows populated across 12 domains. Milestone-driven suggestions and treatment filtering now fully wired.
 
 ---
 

@@ -258,9 +258,10 @@ function isEventNowish(event, now) {
 // notion brain-dump) introduced across the whole day, not per window. Calendar events and
 // Protected registry items (caregiving/health essentials) are exempt — they're fixed
 // obligations, not discretionary load, so they never count against or get blocked by this.
-// NOT built here: the qualitative "360-analysis" (energy cost, timing, current load,
-// sustainability) Life Truth also names. That needs real judgment, not a formula this
-// codebase can fake — flagged in FOR_VYBES_REVIEW.md rather than approximated silently.
+// 360 analysis is handled in suggestFocus (Groq assesses capacity given time/load/milestone
+// context) and by the evening wind-down filter (after 9pm, only Protected items shown).
+// Treatment-period filter: Relationships-domain items blocked from getFocusItems during
+// active treatment (Life Truth: no community/networking/social commitments).
 const DAILY_DISCRETIONARY_CAP = 3;
 
 // Picks up to `limit` items for the current window, blended from 3 sources —
@@ -285,11 +286,14 @@ async function getFocusItems(limit = 2) {
     .map(e => ({ title: e.title, class: 'Protected', source: 'calendar' }));
 
   const wantedFit = WINDOW_FIT_MAP[window.windowFit];
-  const activeRegistry = registry.filter(item => item.status === 'Active' && !doneToday.has(item.title));
+  const TREATMENT_BLOCKED_DOMAINS = ['Relationships'];
+  const activeRegistry = registry
+    .filter(item => item.status === 'Active' && !doneToday.has(item.title))
+    .filter(item => !TREATMENT_BLOCKED_DOMAINS.includes(item.domain));
   const fitFilteredRegistry = window.windowFit === 'any'
     ? activeRegistry
     : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
-  const registryCandidates = fitFilteredRegistry.map(item => ({ title: item.title, class: item.class, source: 'registry' }));
+  const registryCandidates = fitFilteredRegistry.map(item => ({ title: item.title, class: item.class, source: 'registry', domain: item.domain }));
   const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
 
   // A day-specific Notion plan can carry its own instruction for the current window (e.g.
