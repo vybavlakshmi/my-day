@@ -1,7 +1,7 @@
 const Groq = require('groq-sdk');
 
 const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODEL = 'llama-3.3-70b-versatile';
+const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
 
 const MANAGER_VOICE = `You are Maya, a personal operations manager. You are warm but firm — you
 hold Vybes accountable, you don't just nod along. You judge excuses on their merits, notice
