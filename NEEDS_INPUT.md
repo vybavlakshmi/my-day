@@ -10,11 +10,11 @@ You referenced this as an attached file when kicking off the autonomous build. I
 ## 2. Roadmap (dated milestones) — RESOLVED 2026-08-13, this existed already
 Turned out these already exist in far more developed form than the spec implied: **TVC Milestone Roadmap — 2026 → 2031** (dated, tracked, tiered [C]/[P]/[D]) plus The Map's phase structure. What's still actually open is not "does the data exist" but "how should it surface in Maya" — moved to `FOR_VYBES_REVIEW.md`'s decisions-needed section rather than left here, since it's now a design question, not a missing-data one.
 
-## 3. Relationship map
-Spec §7: "close people + how to communicate with them (definition pending from Vybes)." Needed: who counts as close people for this, and what "how to communicate with them" should actually capture (tone preferences? contact frequency? something else?) — the spec flags the definition itself as undecided, not just the data. Not blocking anything else in the current build order.
+## 3. Relationship map — CLOSED 2026-08-18
+§7 closed per Vybes: "The Map is as deep as it goes." Maya already reads Item Registry, Elegance/RDF, Creative Wants, Projects/Builds. No further integration needed.
 
-## 4. Compiled life plan
-Spec §7: "single reconciled priority document, written by Vybes, sits above everything else Maya reads. Not yet delivered." This is explicitly your document to write, not mine to draft. Not blocking anything else in the current build order.
+## 4. Compiled life plan — CLOSED 2026-08-18
+§7 closed per Vybes. Life Truth and Current Truth serve as the governing documents. No separate "compiled life plan" needed.
 
 ## 5. §8 App-launching conflicts with the hosting architecture — needs a decision, not just data
 Spec §8: "Maya can be asked to open local tools directly — e.g., 'let's finish that reel' → Maya opens the reel editor from local files." The backend runs on **Vercel serverless** (cloud). It has no access to your laptop's filesystem and no way to launch a local application on your machine — a cloud function physically cannot do this. This isn't a missing-data problem like the others above, it's an architecture gap the spec didn't account for.
