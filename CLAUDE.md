@@ -65,14 +65,14 @@ A prioritization/timing/focus-enforcement engine, not a task dashboard. Core loo
 - [x] Infra + Vercel deploy
 - [x] §2 Commitment-Keeper
 - [x] §3 Item Registry (real data, Vybes' own richer schema)
-- [x] §4 Timing Engine (Day Schedule + item-selection) — blends Calendar + Registry + Notion now (see above). Falls back to `DEFAULT_DAY_TEMPLATE` when no day-specific plan exists (was returning empty/"between windows" every day by default before this fix). Still missing: the Life Truth "3 things/day max" cap and the 360-analysis capacity check — see mandatory section at top of this file. "Already done" dedup for registry items IS built (Task Log-backed, survives reload). 1am cutoff still not reliably enforced when *now* is already past it.
+- [x] §4 Timing Engine (Day Schedule + item-selection) — blends Calendar + Registry + Notion now (see above). Falls back to `DEFAULT_DAY_TEMPLATE` when no day-specific plan exists. 3/day cap built (DAILY_DISCRETIONARY_CAP). 360 analysis built (2026-08-18): suggestFocus sends time/load/milestone context to Groq for capacity assessment; after 9pm only Protected items shown. 1am hard cutoff enforced in code (getCurrentWindow returns null 01:00–04:59). "Already done" dedup for registry items IS built (Task Log-backed, survives reload).
 - [x] §5 Write-tiering (grocery list as the concrete example)
 - [x] §6 Learning Loop (behavioral logging built; hard-adaptation deferred, needs real usage data)
 - [x] §7 remaining Notion sources (Elegance/RDF, Creative Wants, Projects/Builds built; Roadmap/Relationship-map/life-plan turned out to already exist in far more developed form than the spec implied — see mandatory section at top of this file, this supersedes the original NEEDS_INPUT.md framing of "needs Vybes' input")
 - [x] §8 App-launching logged as architecturally blocked (see NEEDS_INPUT.md) — NOT built, needs a decision first
 - [x] §9 Frontend — rebuilt conversation-first per direct feedback ("felt like a dumb dashboard, not an assistant"). Commitment strip + focus list condensed to chips, conversation thread is now primary, Maya opens with a composed briefing on load.
 
-Spec's literal build order (§2-§9) is implemented, but **§7's life-plan/roadmap integration is a bigger, still-open piece** — see the mandatory section at the top of this file before treating this project as "done." See `KNOWLEDGE_TRANSFER_v7.md` for the complete current snapshot and `NOTES.md`/`NEEDS_INPUT.md` for the reasoning trail and open questions.
+Spec's literal build order (§2-§9) is implemented. §7 closed (2026-08-18): The Map is as deep as it goes, per Vybes — no further integration needed. §8 parked: app-launching is architecturally blocked on Vercel serverless, needs a local companion process, not building. **Carry-forward chat flow built (2026-08-18):** detects unfinished tasks, proposes Zoomed In edits, requires user confirmation before writing. See `FOR_VYBES_REVIEW.md` Session 4 for details.
 
 ## Testing pattern
 

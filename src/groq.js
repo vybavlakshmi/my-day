@@ -89,7 +89,7 @@ Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not
 
 const COMMITMENT_INTENTS = [
   'new_commitment', 'continuation', 'drift', 'conscious_switch', 'completion',
-  'schedule_update', 'grocery_add', 'creative_want_add', 'other',
+  'schedule_update', 'grocery_add', 'creative_want_add', 'carry_forward', 'other',
 ];
 
 // The Commitment-Keeper core: classifies what an incoming message means for the
@@ -112,10 +112,11 @@ Classify this message as exactly one of:
 - "schedule_update": Vybes is telling Maya something that changes today's actual schedule/timing OR her available capacity right now — NOT about a task commitment, about the shape of the day itself. Examples: "hospital's 11 to 2 today", "napped for hours", "lunch at uncle's cut my morning short", "I'm free for the rest of the night", "nothing else pending today", "that's everything done for now". A statement describing available time or that caregiving/chores are done for now is a schedule_update, even with no specific event named — it is NOT a new_commitment just because time has opened up.
 - "grocery_add": Vybes is telling Maya to add item(s) to the grocery list (e.g. "add curd and paneer to grocery", "we need milk")
 - "creative_want_add": Vybes is capturing a creative idea/want — a comic, web novel, story, or character art idea (e.g. "idea for the web novel: a character who...", "comic idea — ...")
+- "carry_forward": Vybes is saying something planned for today or recently didn't get done, isn't finished yet, or needs to move to tomorrow. Key signals: "didn't finish", "couldn't get to", "still need to", "carry over", "not done yet", "incomplete", "still pending", "tomorrow instead". This is about an unfinished TASK — if she's reporting what DID happen (like "hospital was 11 to 2"), that's schedule_update. If she's starting something new, that's new_commitment.
 - "other": general question or comment, not related to any of the above
 
 Reply with ONLY a JSON object:
-{"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if not applicable", "groceryItems": ["array of item names, only when intent is grocery_add, otherwise empty array"], "creativeWant": {"title": "short title, only when intent is creative_want_add", "type": "one of comic/web_novel/story/character_art/other"}, "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it. On schedule_update: just acknowledge briefly, the actual replan happens separately. On grocery_add or creative_want_add: state plainly what was added/captured, no confirmation question needed."}`;
+{"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if not applicable", "groceryItems": ["array of item names, only when intent is grocery_add, otherwise empty array"], "creativeWant": {"title": "short title, only when intent is creative_want_add", "type": "one of comic/web_novel/story/character_art/other"}, "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it. On schedule_update: just acknowledge briefly, the actual replan happens separately. On grocery_add or creative_want_add: state plainly what was added/captured, no confirmation question needed. On carry_forward: acknowledge what didn't get done without guilt, name it clearly, and say it'll carry to tomorrow."}`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,
@@ -269,17 +270,27 @@ Reply with ONLY a JSON object:
 
 // Phrases the suggestion for 1-2 already-selected Item Registry entries. Selection
 // itself (which items, filtering by window-fit/status/class) lives in cadence.js.
-async function suggestFocus(windowName, items) {
+async function suggestFocus(windowName, items, context = {}) {
   if (!items.length) {
     return "Nothing specific queued for right now — you're between windows, or the registry's just quiet here.";
   }
+  const { milestone, doneCount = 0, currentTime, activeCommitment } = context;
   const itemLines = items.map(i => `- ${i.title} (${i.class}, ${i.domain || 'general'})`).join('\n');
-  const prompt = `Current window: ${windowName}.
 
+  let capacityBlock = '';
+  if (currentTime) capacityBlock += `Current time: ${currentTime} IST. `;
+  if (doneCount > 0) capacityBlock += `Items completed today: ${doneCount}. `;
+  if (activeCommitment) capacityBlock += `Active commitment: "${activeCommitment}". `;
+  if (milestone && milestone.daysUntil <= 14) {
+    capacityBlock += `Upcoming milestone: "${milestone.title}" in ${milestone.daysUntil} days (${milestone.track}) — if any item relates, give it extra weight.`;
+  }
+
+  const prompt = `Current window: ${windowName}.
+${capacityBlock ? `\nContext: ${capacityBlock}\n` : ''}
 Candidate items that fit this window right now:
 ${itemLines}
 
-Suggest these to Vybes in your voice, warm and brief — 1-2 sentences for the whole reply, not per item. If any item is protected, be gently persistent about it with an easy off-ramp ("even 10 minutes counts"), never guilt. Never present the full backlog — just these.`;
+Before suggesting, quickly assess: given the time of day${doneCount > 0 ? ` and ${doneCount} item${doneCount > 1 ? 's' : ''} already done` : ''}, does Vybes realistically have capacity for these right now? If it's late evening and she's had a full day, suggest winding down instead of pushing more. If she has capacity, suggest the items — warm and brief, 1-2 sentences for the whole reply. If any item is protected, be gently persistent with an easy off-ramp ("even 10 minutes counts"), never guilt. Never present the full backlog — just these.`;
 
   const completion = await client.chat.completions.create({
     model: MODEL,

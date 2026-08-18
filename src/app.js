@@ -25,14 +25,16 @@ app.get('/tasks', async (req, res) => {
 
 app.get('/status', async (req, res) => {
   try {
-    const [activeCommitment, parked] = await Promise.all([
+    const [activeCommitment, parked, carryForwards] = await Promise.all([
       notion.getActiveCommitment(),
       notion.getParkedThreads(),
+      notion.getPendingCarryForwards().catch(() => []),
     ]);
     res.json({
       activeCommitment: activeCommitment ? activeCommitment.commitment : null,
       parkedCount: parked.length,
       milestone: milestones.getMilestoneStatus().display,
+      carryForwards: carryForwards.map(c => ({ id: c.id, task: c.task })),
     });
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -69,8 +71,22 @@ app.post('/focus/toggle', async (req, res) => {
 
 app.post('/chat', async (req, res) => {
   try {
-    const reply = await cadence.handleChat(req.body.text);
-    res.json({ reply });
+    const result = await cadence.handleChat(req.body.text);
+    if (typeof result === 'string') {
+      res.json({ reply: result });
+    } else {
+      res.json(result);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/carry-forward', async (req, res) => {
+  try {
+    const { parentId, afterBlockId, taskName, fromDay } = req.body;
+    await notion.appendCarryForwardBlock(parentId, afterBlockId, taskName, fromDay);
+    res.json({ ok: true });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }

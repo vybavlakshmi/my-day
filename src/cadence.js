@@ -1,6 +1,7 @@
 const notion = require('./notion');
 const calendar = require('./calendar');
 const groq = require('./groq');
+const milestones = require('./milestones');
 
 const PROTECTED_TASKS = ['Health block', 'Caregiver check-in', 'CAV — one post', 'Mental health / wind-down'];
 
@@ -71,14 +72,21 @@ async function handleChat(text) {
   // getting misread as a new_commitment ("Commitment: what should I do now") rather
   // than a request for a suggestion, since the classifier never saw this concept.
   if (isDirectionSeeking(text)) {
-    const { windowName, items } = await getFocusItems();
+    const { windowName, items, milestone, doneCount } = await getFocusItems();
     if (items.length) {
       await notion.logTaskEvent({
         task: items.map(i => i.title).join(' / '), source: 'registry', status: 'given',
         detail: `Suggested for window "${windowName}"`,
       });
     }
-    return groq.suggestFocus(windowName, items);
+    const activeCommitment = await notion.getActiveCommitment();
+    const now = new Date().toLocaleTimeString('en-GB', {
+      timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
+    });
+    return groq.suggestFocus(windowName, items, {
+      milestone, doneCount, currentTime: now,
+      activeCommitment: activeCommitment ? activeCommitment.commitment : null,
+    });
   }
 
   const activeCommitment = await notion.getActiveCommitment();
@@ -147,6 +155,34 @@ async function handleChat(text) {
       }
       return classification.reply;
 
+    case 'carry_forward': {
+      const taskName = classification.extracted || text;
+      const dayNumber = milestones.getMilestoneStatus().dayNumber;
+      const tomorrowDay = dayNumber + 1;
+      await notion.logTaskEvent({
+        task: taskName, source: 'carry_forward', status: 'pending',
+        detail: `Carry from Day ${dayNumber} to Day ${tomorrowDay}`,
+      });
+      let entry = null;
+      try { entry = await notion.findZoomedInDayEntry(tomorrowDay); } catch (err) {
+        console.error('Zoomed In lookup failed:', err.message);
+      }
+      if (entry) {
+        return {
+          reply: classification.reply,
+          carryForward: {
+            parentId: entry.parentId,
+            afterBlockId: entry.blockId,
+            taskName,
+            fromDay: dayNumber,
+            toDay: tomorrowDay,
+            currentEntry: entry.text,
+          },
+        };
+      }
+      return classification.reply;
+    }
+
     default:
       break; // 'other' falls through to the excuse/plain-chat logic below
   }
@@ -187,12 +223,15 @@ function inWindow(nowMin, startMin, endMin) {
 // previously this just returned null every day until the first schedule_update
 // message, which made the dashboard look empty/broken by default.
 async function getCurrentWindow() {
-  const dayPlan = await notion.getDayPlan();
-  const plan = (dayPlan && dayPlan.plan.length) ? dayPlan.plan : groq.DEFAULT_DAY_TEMPLATE;
   const now = new Date().toLocaleTimeString('en-GB', {
     timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
   });
   const nowMin = timeToMinutes(now);
+  // Hard 1am cutoff — Life Truth: day ends at 1am, no exceptions
+  if (nowMin >= 60 && nowMin < 300) return null;
+
+  const dayPlan = await notion.getDayPlan();
+  const plan = (dayPlan && dayPlan.plan.length) ? dayPlan.plan : groq.DEFAULT_DAY_TEMPLATE;
   return plan.find(w => inWindow(nowMin, timeToMinutes(w.start), timeToMinutes(w.end))) || null;
 }
 
@@ -309,7 +348,21 @@ async function getFocusItems(limit = 2) {
     await notion.logRegistrySurfaced(title).catch(err => console.error('surfaced log failed:', err.message));
   }
 
-  return { windowName: window.name, items };
+  // After 9pm, filter to Protected-only — discretionary work should wind down
+  const hour = parseInt(new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false,
+  }));
+  const finalItems = hour >= 21
+    ? items.filter(i => i.class === 'Protected' || i.source === 'calendar' || i.source === 'schedule')
+    : items;
+
+  const milestoneStatus = milestones.getMilestoneStatus();
+  return {
+    windowName: window.name,
+    items: finalItems,
+    milestone: milestoneStatus.next,
+    doneCount: negotiableCountedToday.size,
+  };
 }
 
 module.exports = { getAllTasks, handleChat, getCurrentWindow, getFocusItems };

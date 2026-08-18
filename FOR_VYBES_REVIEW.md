@@ -1,6 +1,45 @@
-# For Vybes — to-do (session 2026-08-13, updated 2026-08-17)
+# For Vybes — to-do (session 2026-08-13, updated 2026-08-18)
 
 Checklist version — check items off as you go. Full context/reasoning for anything here lives in `KNOWLEDGE_TRANSFER_v8.md` and `CLAUDE.md` if you want the long version; this file stays short on purpose.
+
+---
+
+## Session 4 (2026-08-18) — finishing Maya
+
+### What I built this session (not yet pushed):
+
+**1. 1am hard cutoff** (`cadence.js`)
+- `getCurrentWindow()` now returns null between 01:00–04:59 IST. No tasks suggested, no windows active. Previously this was only in the planDay prompt (Groq could still violate it).
+
+**2. 360 analysis / capacity assessment** (`groq.js`, `cadence.js`)
+- `suggestFocus()` now receives context: current time, items already done today, active commitment, and upcoming milestone. The prompt asks Groq to assess capacity before suggesting — if it's late evening and she's had a full day, it'll suggest winding down instead of pushing more.
+- Evening wind-down: after 9pm IST, `getFocusItems()` filters to Protected/Calendar/Schedule items only — no new discretionary tasks.
+
+**3. Milestone-driven suggestions** (`cadence.js`, `groq.js`)
+- `getFocusItems()` now returns the next upcoming milestone alongside items.
+- `suggestFocus()` prompt tells Groq about milestones within 14 days and asks it to give extra weight to related items.
+- When combined with populated Domain fields on Item Registry, this will let Maya prioritize items matching the upcoming milestone's track.
+
+**4. Carry-forward chat flow** (`groq.js`, `cadence.js`, `notion.js`, `app.js`, `index.html`, `vercel.json`)
+- New `carry_forward` intent in `classifyCommitment` — detects "didn't finish X", "couldn't get to X", etc.
+- When triggered: logs to Task Log (source: carry_forward, status: pending), then tries to find tomorrow's day entry on Phase 1 — Zoomed In.
+- If found: returns a carry-forward card to the frontend showing what will be added and where. User must click "Confirm" before anything is written to Notion. "Skip" dismisses it.
+- On confirm: appends `↳ Carried forward: [task] (from Day N)` as a new block on Zoomed In, right after tomorrow's day entry.
+- Opening briefing now checks for yesterday's pending carry-forwards and mentions them: "From yesterday: [task] — still unfinished."
+- **Requires:** Phase 1 — Zoomed In to have the reallocated Aug 18–31 day entries written first (pending your approval).
+
+**5. §7 closed** — The Map is as deep as it goes, per your instruction. No further integration needed. Maya already reads Item Registry, Elegance/RDF, Creative Wants, Projects/Builds.
+
+**6. §8 parked** — App-launching is architecturally impossible on Vercel serverless (can't launch local apps from a cloud function). Would need a local companion process. Not building it — this is a separate product decision.
+
+### Still needs your approval:
+
+- [ ] **Write reallocated Aug 18–31 schedule to Notion** — the draft is ready (exact per-day entries, tasks from Aug 13-17 redistributed, no compression). Say "go" and I'll write it to Phase 1 — Zoomed In, replacing all old August content.
+- [ ] **Clear "quick test" active commitment** — leftover from your Parked Threads restore testing. Say the word.
+
+### Blocked on you (no rush):
+
+- **Item Registry Domain field** — empty on all 62 rows. Milestone-driven suggestions will work better once domains are populated (Maya can match items to milestone tracks).
 
 ---
 

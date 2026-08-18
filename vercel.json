@@ -8,6 +8,7 @@
     { "source": "/status", "destination": "/api/index" },
     { "source": "/parked", "destination": "/api/index" },
     { "source": "/focus", "destination": "/api/index" },
-    { "source": "/focus/toggle", "destination": "/api/index" }
+    { "source": "/focus/toggle", "destination": "/api/index" },
+    { "source": "/carry-forward", "destination": "/api/index" }
   ]
 }

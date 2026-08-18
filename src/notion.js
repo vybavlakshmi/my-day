@@ -370,6 +370,84 @@ async function getTodaySurfacedRegistryTitles() {
   return new Set(res.results.map(page => plainText(page.properties.Task.title)));
 }
 
+const ZOOMED_IN_PAGE_ID = '3a3aa293e5a28129863ade0c35e936bf';
+
+function extractBlockText(block) {
+  const data = block[block.type];
+  return data && data.rich_text ? plainText(data.rich_text) : null;
+}
+
+async function findZoomedInDayEntry(dayNumber) {
+  const dayPattern = `Day ${dayNumber}`;
+  async function walk(parentId) {
+    let cursor;
+    do {
+      const res = await notion.blocks.children.list({ block_id: parentId, start_cursor: cursor });
+      for (const block of res.results) {
+        const text = extractBlockText(block);
+        if (text && text.startsWith(`Day ${dayNumber} `)) {
+          return { blockId: block.id, parentId, text };
+        }
+        if (block.has_children) {
+          const found = await walk(block.id);
+          if (found) return found;
+        }
+      }
+      cursor = res.has_more ? res.next_cursor : undefined;
+    } while (cursor);
+    return null;
+  }
+  return walk(ZOOMED_IN_PAGE_ID);
+}
+
+async function appendCarryForwardBlock(parentId, afterBlockId, taskName, fromDay) {
+  const children = [{
+    paragraph: {
+      rich_text: [{
+        text: { content: `↳ Carried forward: ${taskName} (from Day ${fromDay})` },
+        annotations: { italic: true, color: 'gray' },
+      }],
+    },
+  }];
+  try {
+    await notion.blocks.children.append({ block_id: parentId, after: afterBlockId, children });
+  } catch {
+    await notion.blocks.children.append({ block_id: parentId, children });
+  }
+}
+
+function yesterdayISO() {
+  const d = new Date();
+  d.setDate(d.getDate() - 1);
+  return d.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+}
+
+async function getPendingCarryForwards() {
+  const yesterday = yesterdayISO();
+  const res = await notion.databases.query({
+    database_id: TASK_LOG_DB,
+    filter: {
+      and: [
+        { property: 'Source', select: { equals: 'carry_forward' } },
+        { property: 'Date', date: { equals: yesterday } },
+        { property: 'Status', select: { equals: 'pending' } },
+      ],
+    },
+    page_size: 10,
+  });
+  return res.results.map(page => ({
+    id: page.id,
+    task: plainText(page.properties.Task.title),
+  }));
+}
+
+async function resolveCarryForward(pageId, status) {
+  await notion.pages.update({
+    page_id: pageId,
+    properties: { Status: { select: { name: status } } },
+  });
+}
+
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -397,4 +475,8 @@ module.exports = {
   getTodayDoneRegistryTitles,
   logRegistrySurfaced,
   getTodaySurfacedRegistryTitles,
+  findZoomedInDayEntry,
+  appendCarryForwardBlock,
+  getPendingCarryForwards,
+  resolveCarryForward,
 };

@@ -81,6 +81,23 @@
   }
   .empty { color: var(--soft); font-size: 12.5px; padding: 4px 0; }
 
+  .carry-forward-card {
+    margin-top: 8px; padding: 10px 14px; border-radius: 12px; background: #FFF8F0;
+    border: 1px solid #F5E6D3; font-size: 12.5px; color: #6B4C2A;
+  }
+  .carry-forward-card .cf-label {
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600;
+    letter-spacing: 0.5px; text-transform: uppercase; color: #C4884D; margin-bottom: 4px;
+  }
+  .carry-forward-card .cf-task { font-weight: 500; margin: 4px 0; }
+  .carry-forward-card .cf-actions { display: flex; gap: 8px; margin-top: 8px; }
+  .carry-forward-card .cf-btn {
+    font-family: 'Inter', sans-serif; font-size: 11px; font-weight: 600; border: none;
+    border-radius: 999px; padding: 5px 14px; cursor: pointer;
+  }
+  .cf-btn.confirm { background: var(--blue-1); color: #fff; }
+  .cf-btn.dismiss { background: #F4F8FB; color: var(--soft); }
+
   /* Conversation thread — now the main, dominant surface. */
   .thread { margin-top: 22px; display: flex; flex-direction: column; gap: 10px; }
   .msg { max-width: 86%; padding: 11px 15px; border-radius: 16px; font-size: 14px; line-height: 1.45; }
@@ -339,26 +356,6 @@
     return lastFocus;
   }
 
-  // Maya "opens" the conversation with a brief brief, composed from what's already
-  // known — no extra API call, just makes the first thing you see feel like she's
-  // spoken first, not an empty box waiting for you to type.
-  function composeOpening(status, focus) {
-    const parts = [`${timeGreeting()}, Vybes.`];
-    if (status.activeCommitment) {
-      parts.push(`We're on "${status.activeCommitment}" right now.`);
-    }
-    if (focus.items && focus.items.length) {
-      const names = focus.items.map(i => i.title).join(" and ");
-      parts.push(`For ${formatWindowName(focus.windowName).toLowerCase()}, I've got ${names} queued.`);
-    } else if (!status.activeCommitment) {
-      parts.push("Nothing specific queued right now — tell me what's on your mind.");
-    }
-    if (status.parkedCount > 0) {
-      parts.push(`${status.parkedCount} thread${status.parkedCount === 1 ? "" : "s"} still parked whenever you want them back.`);
-    }
-    return parts.join(" ");
-  }
-
   (async function init() {
     const [status, focus] = await Promise.all([loadStatus(), loadFocus()]);
     addMessage("maya", composeOpening(status, focus));
@@ -389,7 +386,7 @@
     input.value = "";
     addMessage("you", text);
 
-    let reply;
+    let reply, chatData;
     try {
       const chatRes = await fetch("/chat", {
         method: "POST",
@@ -397,15 +394,17 @@
         body: JSON.stringify({ text }),
       });
       if (!chatRes.ok) throw new Error("chat failed");
-      ({ reply } = await chatRes.json());
+      chatData = await chatRes.json();
+      reply = chatData.reply;
     } catch {
       addMessage("maya", "Sorry, that didn't go through — try again?");
       return;
     }
 
     addMessage("maya", reply);
-    loadStatus(); // a commitment/drift/switch/completion may have changed
-    loadFocus();  // a schedule update may have changed the current window
+    if (chatData.carryForward) showCarryForwardCard(chatData.carryForward);
+    loadStatus();
+    loadFocus();
 
     // Voice generation takes real time (network round-trip + synthesis) — this
     // subtle pulse says "still working on it" instead of leaving dead air.
@@ -430,6 +429,52 @@
       startSpeaking(3000);
     }
   }
+  function showCarryForwardCard(cf) {
+    const card = document.createElement("div");
+    card.className = "carry-forward-card";
+    card.innerHTML = `
+      <div class="cf-label">Carry forward to Day ${cf.toDay}</div>
+      <div class="cf-task">${cf.taskName}</div>
+      <div style="font-size:11px;color:#8B7355;margin-top:4px">Will add a note after tomorrow's entry on Phase 1 — Zoomed In</div>
+      <div class="cf-actions">
+        <button class="cf-btn confirm">Confirm</button>
+        <button class="cf-btn dismiss">Skip</button>
+      </div>`;
+    threadEl.appendChild(card);
+    card.scrollIntoView({ behavior: "smooth", block: "end" });
+    card.querySelector(".cf-btn.confirm").addEventListener("click", async () => {
+      try {
+        await fetch("/carry-forward", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ parentId: cf.parentId, afterBlockId: cf.afterBlockId, taskName: cf.taskName, fromDay: cf.fromDay }),
+        });
+        card.innerHTML = '<div class="cf-label">Done</div><div class="cf-task">Added to Phase 1 — Zoomed In.</div>';
+      } catch { card.innerHTML = '<div class="cf-label">Failed</div><div class="cf-task">Couldn\'t write — try again later.</div>'; }
+    });
+    card.querySelector(".cf-btn.dismiss")?.addEventListener("click", () => { card.remove(); });
+  }
+
+  function composeOpening(status, focus) {
+    const parts = [`${timeGreeting()}, Vybes.`];
+    if (status.carryForwards && status.carryForwards.length) {
+      const names = status.carryForwards.map(c => c.task).join(", ");
+      parts.push(`From yesterday: ${names} — still unfinished.`);
+    }
+    if (status.activeCommitment) {
+      parts.push(`We're on "${status.activeCommitment}" right now.`);
+    }
+    if (focus.items && focus.items.length) {
+      const names = focus.items.map(i => i.title).join(" and ");
+      parts.push(`For ${formatWindowName(focus.windowName).toLowerCase()}, I've got ${names} queued.`);
+    } else if (!status.activeCommitment) {
+      parts.push("Nothing specific queued right now — tell me what's on your mind.");
+    }
+    if (status.parkedCount > 0) {
+      parts.push(`${status.parkedCount} thread${status.parkedCount === 1 ? "" : "s"} still parked whenever you want them back.`);
+    }
+    return parts.join(" ");
+  }
+
   document.getElementById("sparkBtn").addEventListener("click", handleSend);
   document.getElementById("msgInput").addEventListener("keydown", e => { if (e.key === "Enter") handleSend(); });
   document.getElementById("homeBtn").addEventListener("click", () => window.scrollTo({ top: 0, behavior: "smooth" }));
