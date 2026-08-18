@@ -39,7 +39,7 @@ A prioritization/timing/focus-enforcement engine, not a task dashboard. Core loo
 ## Architecture (locked, reuse — don't rebuild)
 
 - **Hosting:** Vercel serverless. `api/index.js` re-exports `src/app.js` (the real Express app + routes). `src/server.js` is local-dev-only (`app.listen()`), not used in production. `vercel.json` rewrites `/health`, `/tasks`, `/chat`, `/task/toggle`, `/speak` to the function; static `public/` served directly by Vercel.
-- **Reasoning:** Groq, `llama-3.3-70b-versatile`, via `src/groq.js`. Only task titles/excuses/messages go to Groq — never health data.
+- **Reasoning:** Groq, `openai/gpt-oss-120b` (was `llama-3.3-70b-versatile` until Groq deprecated it 2026-06-17), via `src/groq.js`. Configurable via `GROQ_MODEL` env var. Only task titles/excuses/messages go to Groq — never health data.
 - **Memory:** Notion, via `src/notion.js` (`@notionhq/client`). Every new database must be manually connected to the "My Day Manager" integration (Notion → "..." → Connections) before the app's `NOTION_TOKEN` can see it — this has been the single most repeated setup mistake.
 - **Voice:** `src/maya.js`, Edge TTS (`msedge-tts`). Voice keys are `maya`→`en-US-EmmaNeural` / `jenny`→`en-US-JennyNeural`. The Microsoft voice model name itself can't be renamed.
 - **Calendar:** `src/calendar.js`, Google OAuth refresh-token flow (not a raw access token — those expire hourly). Read-only.

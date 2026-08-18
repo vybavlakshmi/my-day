@@ -32,6 +32,9 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 
 **6. §8 parked** — App-launching is architecturally impossible on Vercel serverless (can't launch local apps from a cloud function). Would need a local companion process. Not building it — this is a separate product decision.
 
+**5. Groq model fix** (`groq.js`)
+- Discovered during testing: `llama-3.3-70b-versatile` was deprecated by Groq on 2026-06-17. **All chat functionality was broken** — "what should I do", excuse detection, commitment tracking, schedule updates, everything that uses Groq. Replaced with `openai/gpt-oss-120b` (Groq's recommended replacement). Model is now also configurable via `GROQ_MODEL` env var if you want to override on Vercel.
+
 ### Still needs your approval:
 
 - [ ] **Write reallocated Aug 18–31 schedule to Notion** — the draft is ready (exact per-day entries, tasks from Aug 13-17 redistributed, no compression). Say "go" and I'll write it to Phase 1 — Zoomed In, replacing all old August content.
