@@ -121,4 +121,17 @@ app.post('/speak', async (req, res) => {
   }
 });
 
+// TEMPORARY: batch day-schedule migration endpoint (remove after use)
+app.post('/admin/set-day-plan', async (req, res) => {
+  try {
+    const { date, plan } = req.body;
+    if (!date || !plan) return res.status(400).json({ error: 'date and plan required' });
+    await notion.setDayPlanForDate(date, plan);
+    res.json({ ok: true, date });
+  } catch (err) {
+    console.error('set-day-plan error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 module.exports = app;
