@@ -121,16 +121,39 @@ app.post('/speak', async (req, res) => {
   }
 });
 
-// TEMPORARY: batch day-schedule migration endpoint (remove after use)
-app.post('/admin/set-day-plan', async (req, res) => {
+// TEMPORARY: one-shot migration of Day Schedule Aug 20-31 to current template (remove after use)
+app.get('/admin/migrate-schedule', async (req, res) => {
   try {
-    const { date, plan } = req.body;
-    if (!date || !plan) return res.status(400).json({ error: 'date and plan required' });
-    await notion.setDayPlanForDate(date, plan);
-    res.json({ ok: true, date });
+    const { DEFAULT_DAY_TEMPLATE } = require('./groq');
+    const dayDetails = {
+      '2026-08-20': { b1: 'Build.', b2: "Post today's 3, queued. Networking 1." },
+      '2026-08-21': { b1: 'Build.', b2: "Post today's 3, queued. Portfolio." },
+      '2026-08-22': { b1: 'Build.', b2: "Post today's 3, queued. Networking 2. Caregiving note." },
+      '2026-08-23': { b1: 'Cold-read. Mid-point check.', b2: "Post today's 3, queued. Portfolio. Runway math." },
+      '2026-08-24': { b1: 'Build/polish.', b2: "Post today's 3, queued. Portfolio." },
+      '2026-08-25': { b1: 'Build/polish.', b2: "Post today's 3, queued. Networking 1." },
+      '2026-08-26': { b1: 'Cold-read as stranger, fix list.', b2: "Post today's 3, queued. Portfolio." },
+      '2026-08-27': { b1: 'Final structural pass, correctness pass.', b2: "Post today's 3, queued. Networking 2." },
+      '2026-08-28': { b1: 'Red-team.', b2: "Post today's 3, queued. Portfolio." },
+      '2026-08-29': { b1: 'Delivery setup.', b2: "Post today's 3, queued. Portfolio — final push. Caregiving note." },
+      '2026-08-30': { b1: 'Launch copy.', b2: "Post today's 3, queued. Portfolio — close out. Runway math." },
+      '2026-08-31': { b1: 'Final go/no-go.', b2: "Post today's 3, queued — last day. Month review." },
+    };
+    const results = [];
+    for (const [date, details] of Object.entries(dayDetails)) {
+      const plan = DEFAULT_DAY_TEMPLATE.map(w => {
+        const obj = { ...w };
+        if (w.name === 'business_1') obj.detail = details.b1;
+        if (w.name === 'business_2') obj.detail = details.b2;
+        return obj;
+      });
+      await notion.setDayPlanForDate(date, plan);
+      results.push({ date, ok: true, windows: plan.length });
+    }
+    res.json({ migrated: results.length, results });
   } catch (err) {
-    console.error('set-day-plan error:', err);
-    res.status(500).json({ error: err.message });
+    console.error('migrate-schedule error:', err);
+    res.status(500).json({ error: err.message, stack: err.stack });
   }
 });
 
