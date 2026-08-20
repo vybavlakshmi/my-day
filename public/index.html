@@ -26,18 +26,16 @@
   .topbar .spacer { width: 30px; height: 30px; }
   .topbar .title { font-family: 'Inter', sans-serif; font-weight: 700; letter-spacing: 2px; font-size: 14px; }
 
-  .pill {
-    align-self: center; margin-top: 12px; display: inline-flex; align-items: center; gap: 8px;
-    padding: 6px 14px; border-radius: 999px; background: #F3F8FF; color: var(--blue-1);
-    font-family: 'Inter', sans-serif; font-weight: 500; font-size: 12px; letter-spacing: 0.3px;
+  .milestone-bar {
+    text-align: center; margin-top: 14px; padding: 10px 16px; border-radius: 12px;
+    background: #F3F8FF; border: 1px solid #E0EDFF;
   }
-  .pill .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--blue-1); animation: livepulse 2s infinite; }
-  .pill.offline { background: #FDF3F3; color: #C0564C; }
-  .pill.offline .dot { background: #C0564C; animation: none; }
-  @keyframes livepulse {
-    0% { box-shadow: 0 0 0 0 rgba(30,127,255,0.45); }
-    70% { box-shadow: 0 0 0 7px rgba(30,127,255,0); }
-    100% { box-shadow: 0 0 0 0 rgba(30,127,255,0); }
+  .milestone-bar .milestone-label {
+    font-family: 'Inter', sans-serif; font-size: 9px; font-weight: 600;
+    letter-spacing: 1px; text-transform: uppercase; color: var(--soft); margin-bottom: 2px;
+  }
+  .milestone-bar .milestone-text {
+    font-family: 'Poppins', sans-serif; font-size: 14px; font-weight: 500; color: var(--blue-1);
   }
 
   /* Compact date/greeting line — was a big hero block, now just a small header
@@ -177,12 +175,13 @@
       <div class="spacer"></div>
     </div>
 
-    <div class="pill" id="healthPill">
-      <span class="dot"></span><span id="healthText">Manager online</span>
-    </div>
-
     <div class="datebar">
       <div class="today" id="todayLine">SUNDAY, 5 JULY</div>
+    </div>
+
+    <div class="milestone-bar" id="milestoneBar" style="display:none">
+      <div class="milestone-label">Milestone countdown</div>
+      <div class="milestone-text" id="milestoneText"></div>
     </div>
 
     <div class="context-row">
@@ -250,7 +249,8 @@
     lastStatus = data;
     document.getElementById("onNowText").textContent = data.activeCommitment || "Nothing committed yet";
     if (data.milestone) {
-      document.getElementById("topTitle").textContent = data.milestone;
+      document.getElementById("milestoneBar").style.display = "block";
+      document.getElementById("milestoneText").textContent = data.milestone;
     }
     const chip = document.getElementById("parkedChip");
     if (data.parkedCount > 0) {
@@ -292,7 +292,8 @@
   // ---- Focus mini-list: blended Calendar/Registry/Notion items for the current window ----
   function formatWindowName(name) {
     if (!name) return "Right now";
-    return name.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    const clean = name.split("_").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" ");
+    return clean.replace(/\s*Pt\d+$/i, "").replace(/\s+\d+$/, "");
   }
 
   let lastFocus = { windowName: null, items: [] };
@@ -361,14 +362,6 @@
     addMessage("maya", composeOpening(status, focus));
   })();
 
-  async function checkHealth() {
-    const pill = document.getElementById("healthPill"), txt = document.getElementById("healthText");
-    try { const r = await fetch("/health",{cache:"no-store"}); if(!r.ok) throw 0;
-      pill.classList.remove("offline"); txt.textContent="Manager online";
-    } catch { pill.classList.add("offline"); txt.textContent="Manager offline"; }
-  }
-  checkHealth();
-  setInterval(checkHealth, 60000);
 
   const semi = document.getElementById("semi");
   let speakTimer = null;

@@ -45,8 +45,8 @@ function getMilestoneStatus() {
   }
 
   const daysUntil = daysBetween(today, upcoming.date);
-  const whenText = daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `${daysUntil} days`;
-  const display = `Day ${dayNumber} · Phase 1 · next: ${upcoming.title}, ${whenText} (${formatDateShort(upcoming.date)})`;
+  const whenText = daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `${daysUntil} days to go`;
+  const display = `${upcoming.title}, ${whenText}`;
 
   return {
     display,
