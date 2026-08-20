@@ -449,28 +449,6 @@ async function resolveCarryForward(pageId, status) {
   });
 }
 
-// TEMPORARY: batch-update day schedule for a specific date (remove after migration)
-async function setDayPlanForDate(dateStr, plan) {
-  const res = await notion.databases.query({
-    database_id: DAY_SCHEDULE_DB,
-    filter: { property: 'Day', date: { equals: dateStr } },
-    page_size: 1,
-  });
-  const chunks = chunkString(JSON.stringify(plan), PLAN_CHUNK_SIZE);
-  const properties = {
-    Date: { title: [{ text: { content: dateStr } }] },
-    Day: { date: { start: dateStr } },
-  };
-  PLAN_FIELDS.forEach((field, i) => {
-    properties[field] = { rich_text: chunks[i] ? [{ text: { content: chunks[i] } }] : [] };
-  });
-  if (res.results.length) {
-    await notion.pages.update({ page_id: res.results[0].id, properties });
-  } else {
-    await notion.pages.create({ parent: { database_id: DAY_SCHEDULE_DB }, properties });
-  }
-}
-
 module.exports = {
   getOpenTasks,
   markTaskDone,
@@ -502,5 +480,4 @@ module.exports = {
   appendCarryForwardBlock,
   getPendingCarryForwards,
   resolveCarryForward,
-  setDayPlanForDate,
 };
