@@ -303,7 +303,7 @@ async function getFocusItems(limit = 2) {
   // (exempt from the 3/day cap) — it's a pre-committed plan block, not a new assignment
   // Maya is inventing. DEFAULT_DAY_TEMPLATE windows never carry `detail`, so this is a
   // no-op on days without a specific plan loaded.
-  const scheduleCandidates = (window.detail && window.name.startsWith('business'))
+  const scheduleCandidates = (window.detail && window.name.startsWith('business') && !doneToday.has(window.detail))
     ? [{ title: window.detail, class: 'Protected', source: 'schedule' }]
     : [];
 
