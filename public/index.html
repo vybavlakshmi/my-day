@@ -300,18 +300,17 @@
 
   function renderFocus(windowName, items) {
     lastFocus = { windowName, items };
-    document.getElementById("focusTitle").textContent = formatWindowName(windowName);
+    document.getElementById("focusTitle").textContent = "Focus";
     const box = document.getElementById("focusList");
     if (!items || !items.length) {
       box.innerHTML = '<div class="empty">Nothing specific queued right now.</div>';
       return;
     }
-    const sourceLabel = { calendar: "calendar", notion: "brain dump" };
+    const sourceTag = { calendar: "calendar", notion: "brain dump", schedule: "today's plan" };
     box.innerHTML = items.map(it => `
       <div class="task" data-title="${it.title.replace(/"/g, "&quot;")}" data-source="${it.source}" data-id="${it.id || ""}">
         <span class="tick"></span><span>${it.title}</span>
-        ${it.class === "Protected" ? '<span class="protected-flag">protected</span>' : ""}
-        ${sourceLabel[it.source] ? `<span class="protected-flag" style="color:var(--soft);background:#F4F8FB">${sourceLabel[it.source]}</span>` : ""}
+        ${sourceTag[it.source] ? `<span class="protected-flag" style="color:var(--soft);background:#F4F8FB">${sourceTag[it.source]}</span>` : ""}
       </div>`).join("");
     // Toggle behavior differs by where the item actually came from — registry
     // persists via Task Log (depth-one reveal), notion ticks the real Notion
@@ -458,7 +457,7 @@
     }
     if (focus.items && focus.items.length) {
       const names = focus.items.map(i => i.title).join(" and ");
-      parts.push(`For ${formatWindowName(focus.windowName).toLowerCase()}, I've got ${names} queued.`);
+      parts.push(`I've got ${names} queued for you right now.`);
     } else if (!status.activeCommitment) {
       parts.push("Nothing specific queued right now — tell me what's on your mind.");
     }
