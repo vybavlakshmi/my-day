@@ -35,10 +35,10 @@ Checklist version — check items off as you go. Full context/reasoning for anyt
 **7. Groq model fix** (`groq.js`)
 - Discovered during testing: `llama-3.3-70b-versatile` was deprecated by Groq on 2026-06-17. **All chat functionality was broken** — "what should I do", excuse detection, commitment tracking, schedule updates, everything that uses Groq. Replaced with `openai/gpt-oss-120b` (Groq's recommended replacement). Model is now also configurable via `GROQ_MODEL` env var if you want to override on Vercel.
 
-### Still needs your approval:
+### Done (approved by Vybes 2026-08-20):
 
-- [ ] **Write reallocated Aug 18–31 schedule to Notion** — the draft is ready (exact per-day entries, tasks from Aug 13-17 redistributed, no compression). Say "go" and I'll write it to Phase 1 — Zoomed In, replacing all old August content.
-- [ ] **Clear "quick test" active commitment** — leftover from your Parked Threads restore testing. Say the word.
+- [x] **Reallocated Aug 18–31 schedule written to Notion** — full day-by-day entries (Days 24–37) on Phase 1 — Zoomed In. All old MOO-based historical content and the August block view toggle removed.
+- [x] **"quick test" active commitment cleared** — was a testing leftover, now gone.
 
 **6. Treatment-period filter** (`cadence.js`)
 - Now that Domain is populated on all 62 rows, `getFocusItems()` blocks Relationships-domain items during treatment (Life Truth: no community/networking/social commitments). Items with domain "Relationships" will never be suggested by Maya.
