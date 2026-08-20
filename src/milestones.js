@@ -9,7 +9,7 @@ const PHASE_1_DAY_0 = '2026-07-25';
 // here would repeat the exact stale-data mistake flagged in FOR_VYBES_REVIEW.md earlier
 // this session. Re-curate by hand when the Map / Milestone Roadmap materially changes.
 const MILESTONES = [
-  { date: '2026-09-01', title: 'New product launch (reworked Aug plan)', track: 'Business', hard: false },
+  { date: '2026-09-01', title: 'New product launch', track: 'Business', hard: false },
   { date: '2026-09-17', title: 'Day 60 trigger — TVC revenue check / career fork', track: 'Business/Career', hard: true },
   { date: '2026-11-10', title: '74→68kg physical target', track: 'Physical', hard: true },
   { date: '2026-11-15', title: 'Maya scope frozen, v1 built', track: 'Business', hard: false },
