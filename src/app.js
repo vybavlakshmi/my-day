@@ -124,16 +124,17 @@ app.post('/speak', async (req, res) => {
 });
 
 app.post('/telegram/webhook', async (req, res) => {
-  res.json({ ok: true });
   try {
     const msg = telegram.extractMessage(req.body);
-    if (!msg || !msg.text) return;
+    if (!msg || !msg.text) return res.json({ ok: true });
     if (msg.isCallback) await telegram.answerCallback(msg.callbackId);
     const reply = await chief.handleMessage(msg.text);
     const text = typeof reply === 'string' ? reply : (reply.reply || JSON.stringify(reply));
     await telegram.sendMessage(msg.chatId, text);
+    res.json({ ok: true });
   } catch (err) {
     console.error('Telegram webhook error:', err.message);
+    res.json({ ok: true });
   }
 });
 
