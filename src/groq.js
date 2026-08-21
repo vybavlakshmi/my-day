@@ -1,7 +1,4 @@
-const Groq = require('groq-sdk');
-
-const client = new Groq({ apiKey: process.env.GROQ_API_KEY });
-const MODEL = process.env.GROQ_MODEL || 'openai/gpt-oss-120b';
+const { chat, chatJSON } = require('./llm');
 
 const MANAGER_VOICE = `You are Maya, Vybes' personal prioritisation and focus engine. You live inside a web app at my-day-lovat.vercel.app. Your data comes from Notion databases (Item Registry, Day Schedule, Task Log, Parked Threads, Grocery List, Creative Wants) and Google Calendar — you do NOT have access to files, folders, email, or anything outside these sources. If asked where something is, refer to the Notion database or calendar it actually lives in, or say you don't know — never invent locations.
 
@@ -22,23 +19,15 @@ ${ledgerSummary}
 
 Judge this excuse. Reply with ONLY a JSON object: {"verdict": "genuine" or "weak", "reply": "a short spoken reply, 1-2 sentences, in Maya's voice"}`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.6,
-  });
+  const parsed = await chatJSON([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.6 });
 
-  const raw = completion.choices[0].message.content;
-  try {
-    const parsed = JSON.parse(raw);
+  if (parsed) {
     return { verdict: parsed.verdict === 'genuine' ? 'genuine' : 'weak', reply: parsed.reply };
-  } catch {
-    return { verdict: 'weak', reply: raw };
   }
+  return { verdict: 'weak', reply: 'I couldn\'t process that excuse right now.' };
 }
 
 async function weeklyReview(log) {
@@ -56,16 +45,10 @@ Write exactly 3 short lines:
 
 No preamble, just the 3 lines.`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    temperature: 0.6,
-  });
-
-  return completion.choices[0].message.content.trim();
+  return chat([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.6 });
 }
 
 async function chatReply(text, tasksSummary) {
@@ -76,16 +59,10 @@ Vybes says: "${text}"
 
 Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not an excuse to judge.`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    temperature: 0.7,
-  });
-
-  return completion.choices[0].message.content.trim();
+  return chat([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.7 });
 }
 
 const COMMITMENT_INTENTS = [
@@ -119,29 +96,21 @@ Classify this message as exactly one of:
 Reply with ONLY a JSON object:
 {"intent": "one of the above", "extracted": "a short 3-8 word label for the commitment or thread involved, or empty string if not applicable", "groceryItems": ["array of item names, only when intent is grocery_add, otherwise empty array"], "creativeWant": {"title": "short title, only when intent is creative_want_add", "type": "one of comic/web_novel/story/character_art/other"}, "reply": "Maya's short spoken reply, 1-2 sentences. Warm and enthusiastic about any new idea, but firm about the current commitment when relevant — never nagging, never guilting, never a flat refusal. On drift: name the new idea warmly and park it, don't reject it. On conscious_switch: accept the switch, don't resist it. On schedule_update: just acknowledge briefly, the actual replan happens separately. On grocery_add or creative_want_add: state plainly what was added/captured, no confirmation question needed. On carry_forward: acknowledge what didn't get done without guilt, name it clearly, and say it'll carry to tomorrow."}`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.6,
-  });
+  const parsed = await chatJSON([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.6 });
 
-  const raw = completion.choices[0].message.content;
-  try {
-    const parsed = JSON.parse(raw);
+  if (parsed) {
     return {
       intent: COMMITMENT_INTENTS.includes(parsed.intent) ? parsed.intent : 'other',
       extracted: parsed.extracted || '',
       groceryItems: Array.isArray(parsed.groceryItems) ? parsed.groceryItems : [],
       creativeWant: parsed.creativeWant && parsed.creativeWant.title ? parsed.creativeWant : null,
-      reply: parsed.reply || raw,
+      reply: parsed.reply || '',
     };
-  } catch {
-    return { intent: 'other', extracted: '', groceryItems: [], creativeWant: null, reply: raw };
   }
+  return { intent: 'other', extracted: '', groceryItems: [], creativeWant: null, reply: 'I couldn\'t process that right now.' };
 }
 
 // Vybes' actual routine, used only as the day-start baseline — every real day gets
@@ -247,26 +216,18 @@ Keep window names consistent with the ones already in play above, or a new short
 Reply with ONLY a JSON object:
 {"plan": [{"name": "...", "start": "HH:MM", "end": "HH:MM", "windowFit": "..."}], "reply": "Maya's short spoken confirmation, 1-2 sentences"}`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    response_format: { type: 'json_object' },
-    temperature: 0.5,
-  });
+  const parsed = await chatJSON([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.5 });
 
-  const raw = completion.choices[0].message.content;
-  try {
-    const parsed = JSON.parse(raw);
+  if (parsed) {
     const plan = Array.isArray(parsed.plan)
       ? parsed.plan.filter(w => w.name && w.start && w.end && WINDOW_FITS.includes(w.windowFit))
       : [];
-    return { plan, reply: parsed.reply || raw };
-  } catch {
-    return { plan: existingPlan || [], reply: raw };
+    return { plan, reply: parsed.reply || '' };
   }
+  return { plan: existingPlan || [], reply: 'I couldn\'t replan right now — try again in a moment.' };
 }
 
 // Phrases the suggestion for 1-2 already-selected Item Registry entries. Selection
@@ -293,16 +254,10 @@ ${itemLines}
 
 Before suggesting, quickly assess: given the time of day${doneCount > 0 ? ` and ${doneCount} item${doneCount > 1 ? 's' : ''} already done` : ''}, does Vybes realistically have capacity for these right now? If it's late evening and she's had a full day, suggest winding down instead of pushing more. If she has capacity, suggest the items — warm and brief, 1-2 sentences for the whole reply. If any item is protected, be gently persistent with an easy off-ramp ("even 10 minutes counts"), never guilt. Never present the full backlog — just these.`;
 
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages: [
-      { role: 'system', content: MANAGER_VOICE },
-      { role: 'user', content: prompt },
-    ],
-    temperature: 0.7,
-  });
-
-  return completion.choices[0].message.content.trim();
+  return chat([
+    { role: 'system', content: MANAGER_VOICE },
+    { role: 'user', content: prompt },
+  ], { temperature: 0.7 });
 }
 
 module.exports = {

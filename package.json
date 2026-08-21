@@ -2,7 +2,7 @@
   "name": "my-day-backend",
   "version": "1.0.0",
   "private": true,
-  "description": "Personal Operations System — Manager backend (Groq + Notion + Maya).",
+  "description": "Personal Operations System — Maya agent team (OpenAI + Notion + Telegram).",
   "main": "src/server.js",
   "scripts": {
     "start": "node src/server.js"
@@ -13,7 +13,7 @@
   "dependencies": {
     "express": "^4.19.2",
     "dotenv": "^16.4.5",
-    "groq-sdk": "^0.7.0",
+    "openai": "^4.73.0",
     "@notionhq/client": "^2.2.15",
     "googleapis": "^140.0.1",
     "msedge-tts": "^2.0.7"

@@ -8,6 +8,8 @@ const cadence = require('./cadence');
 const notion = require('./notion');
 const maya = require('./maya');
 const milestones = require('./milestones');
+const telegram = require('./telegram');
+const chief = require('./agents/chief');
 
 const app = express();
 app.use(express.json());
@@ -118,6 +120,63 @@ app.post('/speak', async (req, res) => {
   } catch (err) {
     console.error('speak error:', err);
     res.status(500).json({ error: 'speech synthesis failed' });
+  }
+});
+
+app.post('/telegram/webhook', async (req, res) => {
+  res.json({ ok: true });
+  try {
+    const msg = telegram.extractMessage(req.body);
+    if (!msg || !msg.text) return;
+    if (msg.isCallback) await telegram.answerCallback(msg.callbackId);
+    const reply = await chief.handleMessage(msg.text);
+    const text = typeof reply === 'string' ? reply : (reply.reply || JSON.stringify(reply));
+    await telegram.sendMessage(msg.chatId, text);
+  } catch (err) {
+    console.error('Telegram webhook error:', err.message);
+  }
+});
+
+app.get('/telegram/setup', async (req, res) => {
+  try {
+    const host = req.query.host || `https://${req.headers.host}`;
+    const webhookUrl = `${host}/telegram/webhook`;
+    const result = await telegram.setWebhook(webhookUrl);
+    res.json({ webhookUrl, result });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/telegram/status', async (req, res) => {
+  try {
+    const info = await telegram.getWebhookInfo();
+    res.json(info);
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.post('/agent/chat', async (req, res) => {
+  try {
+    const { text } = req.body;
+    const reply = await chief.handleMessage(text);
+    if (typeof reply === 'string') {
+      res.json({ reply });
+    } else {
+      res.json(reply);
+    }
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/agent/brief', async (req, res) => {
+  try {
+    const brief = await chief.generateBrief();
+    res.json({ brief });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
   }
 });
 

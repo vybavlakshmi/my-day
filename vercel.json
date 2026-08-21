@@ -9,6 +9,11 @@
     { "source": "/parked", "destination": "/api/index" },
     { "source": "/focus", "destination": "/api/index" },
     { "source": "/focus/toggle", "destination": "/api/index" },
-    { "source": "/carry-forward", "destination": "/api/index" }
+    { "source": "/carry-forward", "destination": "/api/index" },
+    { "source": "/telegram/webhook", "destination": "/api/index" },
+    { "source": "/telegram/setup", "destination": "/api/index" },
+    { "source": "/telegram/status", "destination": "/api/index" },
+    { "source": "/agent/chat", "destination": "/api/index" },
+    { "source": "/agent/brief", "destination": "/api/index" }
   ]
 }
