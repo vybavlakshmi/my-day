@@ -4,12 +4,9 @@ const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 const MODEL = process.env.OPENAI_MODEL || 'gpt-5.6-luna';
 
 async function chat(messages, options = {}) {
-  const completion = await client.chat.completions.create({
-    model: MODEL,
-    messages,
-    temperature: options.temperature ?? 0.6,
-    ...(options.json ? { response_format: { type: 'json_object' } } : {}),
-  });
+  const params = { model: MODEL, messages };
+  if (options.json) params.response_format = { type: 'json_object' };
+  const completion = await client.chat.completions.create(params);
   return completion.choices[0].message.content.trim();
 }
 
