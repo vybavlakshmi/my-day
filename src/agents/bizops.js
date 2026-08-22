@@ -20,7 +20,7 @@ Respond as her Biz Ops Manager. If she's asking about admin tasks, give her the 
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function brief() {
@@ -30,7 +30,7 @@ async function brief() {
   const result = await chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: `Here's the current business state:\n${context}\n\nGive a 1-sentence morning nudge about the most important business admin thing Vybes should handle today. If nothing's urgent, say so in under 10 words.` },
-  ], { temperature: 0.5 });
+  ]);
 
   return result;
 }

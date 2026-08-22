@@ -14,7 +14,7 @@ Respond as her Concierge. If she needs something found or arranged, present spec
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 module.exports = { handle };

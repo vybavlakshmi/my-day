@@ -14,7 +14,7 @@ Respond as her Sales Executive. If she's asking about opportunities, give specif
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function brief() {

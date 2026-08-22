@@ -47,4 +47,32 @@ async function answerCallback(callbackId) {
   });
 }
 
-module.exports = { sendMessage, setWebhook, getWebhookInfo, extractMessage, answerCallback };
+async function sendVoice(chatId, audioBuffer) {
+  const boundary = '----MayaBrief' + Date.now();
+  const CRLF = '\r\n';
+
+  const chatIdPart = Buffer.from(
+    `--${boundary}${CRLF}` +
+    `Content-Disposition: form-data; name="chat_id"${CRLF}${CRLF}` +
+    `${chatId}${CRLF}`
+  );
+
+  const voiceHeader = Buffer.from(
+    `--${boundary}${CRLF}` +
+    `Content-Disposition: form-data; name="voice"; filename="brief.mp3"${CRLF}` +
+    `Content-Type: audio/mpeg${CRLF}${CRLF}`
+  );
+
+  const voiceFooter = Buffer.from(`${CRLF}--${boundary}--${CRLF}`);
+
+  const body = Buffer.concat([chatIdPart, voiceHeader, audioBuffer, voiceFooter]);
+
+  const res = await fetch(`${API}/sendVoice`, {
+    method: 'POST',
+    headers: { 'Content-Type': `multipart/form-data; boundary=${boundary}` },
+    body,
+  });
+  return res.json();
+}
+
+module.exports = { sendMessage, sendVoice, setWebhook, getWebhookInfo, extractMessage, answerCallback };

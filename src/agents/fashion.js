@@ -18,7 +18,7 @@ Respond as her Fashion Agent. If she's asking what to wear, suggest a specific o
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 module.exports = { handle };

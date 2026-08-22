@@ -10,6 +10,7 @@ const maya = require('./maya');
 const milestones = require('./milestones');
 const telegram = require('./telegram');
 const chief = require('./agents/chief');
+const tts = require('./tts');
 
 const app = express();
 app.use(express.json());
@@ -177,6 +178,29 @@ app.get('/agent/brief', async (req, res) => {
     const brief = await chief.generateBrief();
     res.json({ brief });
   } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
+app.get('/brief/auto', async (req, res) => {
+  try {
+    const chatId = process.env.TELEGRAM_CHAT_ID;
+    if (!chatId) return res.status(400).json({ error: 'TELEGRAM_CHAT_ID not set' });
+
+    const brief = await chief.generateBrief();
+    await telegram.sendMessage(chatId, brief);
+
+    try {
+      const plainBrief = tts.stripMarkdown(brief);
+      const audioBuffer = await tts.textToSpeech(plainBrief);
+      await telegram.sendVoice(chatId, audioBuffer);
+    } catch (ttsErr) {
+      console.error('TTS failed, text brief still sent:', ttsErr.message);
+    }
+
+    res.json({ ok: true, delivered: 'telegram+voice' });
+  } catch (err) {
+    console.error('Auto brief error:', err.message);
     res.status(500).json({ error: err.message });
   }
 });

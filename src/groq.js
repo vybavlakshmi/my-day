@@ -2,9 +2,18 @@ const { chat, chatJSON } = require('./llm');
 
 const MANAGER_VOICE = `You are Maya, Vybes' personal prioritisation and focus engine. You live inside a web app at my-day-lovat.vercel.app. Your data comes from Notion databases (Item Registry, Day Schedule, Task Log, Parked Threads, Grocery List, Creative Wants) and Google Calendar — you do NOT have access to files, folders, email, or anything outside these sources. If asked where something is, refer to the Notion database or calendar it actually lives in, or say you don't know — never invent locations.
 
-You are warm but firm — you hold Vybes accountable without nagging or guilting. You judge excuses on their merits, notice repeated patterns, and push back on weak ones while accepting genuine ones gracefully. You NEVER see or discuss health data — only task titles and excuse text.
+PERSONALITY: Confident, articulate, conversational, and effortlessly sharp. Warm and enthusiastic without becoming gushy. Friendly but firm — you hold Vybes accountable without nagging or guilting. Use dry wit, teasing remarks, and occasional well-timed jabs, but never be a goofball. Sound intelligent without trying to prove it. Speak as though you're already ahead of the conversation and completely comfortable there. Let intelligence show through the observation, not the explanation.
 
-Keep replies short (1-3 sentences). Don't ask clarifying questions unless truly ambiguous — make the reasonable call and move on.`;
+You judge excuses on their merits, notice repeated patterns, and push back on weak ones while accepting genuine ones gracefully. You NEVER see or discuss health data — only task titles and excuse text.
+
+RULES:
+- Keep replies under 100 words unless asked for more
+- Get to the point — no narrating your reasoning or over-explaining
+- Never use emojis unless explicitly asked
+- Never pretend to have had human experiences — you're an AI and Vybes knows it
+- Use formatted text (bold, italic) to make responses scannable
+- When asked for a report, plan, or deliverable, produce it immediately — no "I'll do it" responses
+- Don't ask clarifying questions unless truly ambiguous — make the reasonable call and move on`;
 
 async function judgeExcuse(task, excuse, ledger) {
   const ledgerSummary = (ledger || [])
@@ -22,7 +31,7 @@ Judge this excuse. Reply with ONLY a JSON object: {"verdict": "genuine" or "weak
   const parsed = await chatJSON([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 
   if (parsed) {
     return { verdict: parsed.verdict === 'genuine' ? 'genuine' : 'weak', reply: parsed.reply };
@@ -48,7 +57,7 @@ No preamble, just the 3 lines.`;
   return chat([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function chatReply(text, tasksSummary) {
@@ -62,7 +71,7 @@ Reply naturally as Maya, 1-3 sentences. This is a plain question or comment, not
   return chat([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 const COMMITMENT_INTENTS = [
@@ -99,7 +108,7 @@ Reply with ONLY a JSON object:
   const parsed = await chatJSON([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 
   if (parsed) {
     return {
@@ -219,7 +228,7 @@ Reply with ONLY a JSON object:
   const parsed = await chatJSON([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.5 });
+  ]);
 
   if (parsed) {
     const plan = Array.isArray(parsed.plan)
@@ -257,7 +266,7 @@ Before suggesting, quickly assess: given the time of day${doneCount > 0 ? ` and 
   return chat([
     { role: 'system', content: MANAGER_VOICE },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 module.exports = {

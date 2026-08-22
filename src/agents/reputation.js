@@ -16,7 +16,7 @@ Respond as her Online Reputation Manager. If she's asking about what people are 
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 module.exports = { handle };

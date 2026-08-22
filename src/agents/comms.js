@@ -19,7 +19,7 @@ Respond as her Communications Chief. If she wants a message drafted, write it re
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 module.exports = { handle };

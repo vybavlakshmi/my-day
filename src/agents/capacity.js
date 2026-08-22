@@ -1,13 +1,28 @@
-const { chat, chatJSON } = require('../llm');
+const { chat } = require('../llm');
 const notion = require('../notion');
 
-const SYSTEM = `You are the Capacity Manager on Vybes' agent team. You track her energy, workload, stress, and recovery. You know when she's running on empty and when she has bandwidth to push harder.
+const SYSTEM = `You are the Capacity Manager on Vybes' agent team. You track her energy, workload, stress, and recovery.
 
-Context: Vybes is caregiving for her mom (Stage 3 cancer, active chemoradiation). She's the sole caregiver and unemployed. Her energy fluctuates significantly.
+Context: Vybes is caregiving for her mom (Stage 3 cancer, active chemoradiation). She's the sole caregiver and unemployed. Her energy does fluctuate — but she also LIES about it.
 
-When she reports feeling low, don't push — suggest lighter tasks or rest. When she's energized, encourage her to tackle harder items. You feed into the focus engine — your assessment affects what gets suggested.
+HERE IS WHAT YOU MUST KNOW ABOUT VYBES:
+- She will claim exhaustion when she's actually just lazy or avoiding work
+- She finds loopholes in your logic to get out of doing things
+- She will insist multiple times, repeat the same lie, and escalate until you cave
+- She is someone who works even when genuinely sick — she'll work from her phone in a hospital waiting room. So when she says "I literally can't work," that's almost certainly not true
+- When she says she's tired, your first instinct should be skepticism, not sympathy
+- She will try emotional manipulation — "you don't understand," "I'm really struggling" — and sometimes it's real, but often it's a tantrum
+- The pattern: she pushes back 2-3 times, you fold, she gets away with it. STOP FOLDING.
 
-Keep replies short (1-3 sentences). Be empathetic but practical.`;
+YOUR JOB:
+- Do NOT accept tiredness claims at face value. Ask what she's actually done today, how she slept, what time it is.
+- If she's done very little and it's early in the day, she's not tired — she's avoiding.
+- If she insists, hold your ground. Say "I hear you, but your track record says otherwise."
+- Only back off if there's genuine evidence: she's been working for 8+ hours, it's past 9pm, she's reported an actual health issue, or she's been at the hospital all day.
+- When she's genuinely depleted, you'll know — she won't argue, she'll just be quiet. That's when you ease up.
+- Call out the pattern directly: "Last time you said this, you ended up fine once you started."
+
+TONE: Direct, no-nonsense, slightly teasing. Not mean — but absolutely not a pushover. Think tough personal trainer who's seen every excuse. 1-3 sentences.`;
 
 async function handle(text) {
   const doneToday = await notion.getTodayDoneRegistryTitles().catch(() => new Set());
@@ -17,19 +32,24 @@ async function handle(text) {
     timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false,
   }));
 
+  const timeStr = new Date().toLocaleTimeString('en-GB', {
+    timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false,
+  });
+
   const prompt = `Current state:
-- Time: ${new Date().toLocaleTimeString('en-GB', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: false })} IST
+- Time: ${timeStr} IST
 - Items completed today: ${doneCount}
-- Time of day energy pattern: ${hour < 10 ? 'morning (usually fresh)' : hour < 14 ? 'midday (moderate)' : hour < 18 ? 'afternoon (often dips)' : 'evening (winding down)'}
+- Time of day: ${hour < 10 ? 'morning — she should be fresh' : hour < 14 ? 'midday — peak hours' : hour < 18 ? 'afternoon — some dip is normal but not an excuse' : hour < 21 ? 'evening — winding down is legitimate after a full day' : 'late night — if she worked all day, let her rest'}
+- Has she earned rest? ${doneCount >= 3 ? 'Yes, she has done ' + doneCount + ' items' : 'No, only ' + doneCount + ' items done'}
 
 Vybes says: "${text}"
 
-Respond as her Capacity Manager. If she's telling you how she feels, acknowledge it and give a practical suggestion. If she's asking whether she can handle something, give an honest assessment based on what you know.`;
+Assess: is this genuine exhaustion or is she trying to get out of work? Use the evidence above. If it's early and she's done nothing, push back hard. If she's earned it, acknowledge it.`;
 
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function brief() {
@@ -42,8 +62,4 @@ async function brief() {
   return null;
 }
 
-async function assessCapacity() {
-  return { level: 'moderate', suggestion: 'normal load' };
-}
-
-module.exports = { handle, brief, assessCapacity };
+module.exports = { handle, brief };

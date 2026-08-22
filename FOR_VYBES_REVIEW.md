@@ -1,4 +1,84 @@
-# For Vybes — to-do (session 2026-08-13, updated 2026-08-18)
+# For Vybes — to-do (session 2026-08-13, updated 2026-08-22)
+
+---
+
+## Session 5 (2026-08-22) — Agent team + Morning Brief + Integrations
+
+### What I built this session:
+
+**1. Maya's voice rewrite** (`groq.js`)
+- New personality: confident, warm, sharp, dry wit, formatted text, under 100 words, no emojis, no fake human experiences, produces deliverables immediately when asked.
+
+**2. Capacity Manager rewrite** (`capacity.js`)
+- Tougher: knows you lie about exhaustion, won't fold after 2-3 pushbacks, checks evidence (items done, time of day, hours worked) before accepting tiredness claims.
+
+**3. Nutritionist loaded** (`nutrition.js`)
+- Full Stamina Project protocol: all targets (1350 kcal, 80-90g protein), food preferences (vegetarian no eggs, no roti, cheese = flatulence, paneer ok), fridge-first planning, QC checklist, daily plan format, 17 permanent rules, caregiving cooking context.
+
+**4. Temperature bug fixed** (ALL agent files + groq.js)
+- The model doesn't support custom temperature values. Every single agent call had `temperature: 0.3-0.7` which would have caused 400 errors on every message. Removed from all 15+ files.
+
+**5. Gmail integration** (`gmail.js`) — NEW
+- Reads unread inbox, separates "needs reply" from "just FYI" emails using sender pattern matching (noreply, notifications, newsletters = FYI; real people = needs reply).
+
+**6. Weather integration** (`weather.js`) — NEW
+- OpenWeatherMap API for Chennai. Shows temp, feels-like, high/low, humidity, description.
+
+**7. Text-to-speech** (`tts.js`) — NEW
+- OpenAI TTS API (tts-1 model, "nova" voice). Converts morning brief text to MP3 audio.
+
+**8. Registry scheduling with pattern learning** (`scheduler.js`) — NEW
+- Uses existing Cadence field (Daily/Weekly/Monthly etc.) plus Task Log completion history to figure out which day recurring items should surface.
+- Learns from your habits: if you always water plants on Tuesday, after 2+ data points it'll only suggest it on Tuesdays.
+- First few weeks: surfaces items based on frequency alone (e.g. weekly = every 7 days since last done). Gets smarter with usage.
+
+**9. Morning brief — complete rebuild** (`agents/chief.js`)
+- Now includes ALL requested sections:
+  1. Upcoming milestone (name + days to go)
+  2. Weather in Chennai
+  3. Emails to reply to (with sender + subject)
+  4. FYI email summary
+  5. Today's calendar
+  6. Top priorities (carry-forwards + active commitment + focus items)
+  7. Monthly goal from The Map (Phase 1 context-aware)
+  8. Zoomed In tasks for today's day number
+  9. Upcoming schedule windows
+  10. Parked threads count
+  11. Agent team briefs
+- Shows Phase 1 day number (Day 0 = 25 July 2026)
+
+**10. Auto-delivery at 9am IST** (`app.js`, `vercel.json`)
+- New endpoint `/brief/auto` — generates brief, sends as Telegram message, then sends voice version as audio.
+- Vercel cron job configured: runs at 3:30am UTC (= 9:00am IST) daily.
+
+**11. Zoomed In integration** (`agents/chief.js`)
+- Morning brief now reads today's day entry from Phase 1 — Zoomed In and lists unchecked to-dos and bullet points.
+
+### Things YOU need to do (I can't do these):
+
+- [ ] **Get your Telegram chat ID** — send any message to your bot, then visit:
+      `https://api.telegram.org/bot<YOUR_BOT_TOKEN>/getUpdates`
+      Find "chat":{"id": NUMBER} — that number is your chat ID.
+
+- [ ] **Add these environment variables in Vercel** (Settings → Environment Variables):
+  - `TELEGRAM_CHAT_ID` — your chat ID from step above
+  - `OPENWEATHER_API_KEY` — free from https://openweathermap.org/api (sign up, get key)
+  - `OPENAI_MODEL` — verify this is set to whatever model you're using
+
+- [ ] **Gmail access** — your existing Google OAuth refresh token needs the Gmail read scope (`https://www.googleapis.com/auth/gmail.readonly`). If your token was created only for calendar, you'll need to re-authorize:
+  1. Go to Google Cloud Console → APIs & Services → Library
+  2. Enable "Gmail API"
+  3. Go to OAuth consent screen → add the gmail.readonly scope
+  4. Re-generate your refresh token with both calendar AND gmail scopes
+  5. Update `GOOGLE_REFRESH_TOKEN` in Vercel with the new token
+  (If this is too complicated, the morning brief will still work — it'll just skip the email section.)
+
+- [ ] **Vercel cron jobs** — these need the Vercel Pro plan ($20/month). If you're on the free plan, the 9am auto-brief won't fire. Alternative: I can set up a free external cron service (like cron-job.org) that hits your `/brief/auto` endpoint at 9am IST instead.
+
+- [ ] **Push the code** — all changes are committed locally. Steps:
+  1. Open GitHub Desktop
+  2. You'll see all the changed files
+  3. Click "Commit" then "Push"
 
 Checklist version — check items off as you go. Full context/reasoning for anything here lives in `KNOWLEDGE_TRANSFER_v8.md` and `CLAUDE.md` if you want the long version; this file stays short on purpose.
 

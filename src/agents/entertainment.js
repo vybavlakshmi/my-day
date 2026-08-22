@@ -16,7 +16,7 @@ Respond as her Entertainment Curator. If she's asking what to watch/play/read, g
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.7 });
+  ]);
 }
 
 module.exports = { handle };

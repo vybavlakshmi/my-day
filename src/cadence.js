@@ -2,6 +2,7 @@ const notion = require('./notion');
 const calendar = require('./calendar');
 const groq = require('./groq');
 const milestones = require('./milestones');
+const scheduler = require('./scheduler');
 
 const PROTECTED_TASKS = ['Health block', 'Caregiver check-in', 'CAV — one post', 'Mental health / wind-down'];
 
@@ -290,9 +291,16 @@ async function getFocusItems(limit = 2) {
   const activeRegistry = registry
     .filter(item => item.status === 'Active' && !doneToday.has(item.title))
     .filter(item => !TREATMENT_BLOCKED_DOMAINS.includes(item.domain));
+
+  const dueItems = await scheduler.getItemsDueToday(activeRegistry).catch(() => activeRegistry);
+  const dueSet = new Set(dueItems.map(i => i.title));
+  const scheduledRegistry = activeRegistry.filter(item =>
+    !item.cadence || item.cadence === 'Daily' || item.cadence === 'One-off' || dueSet.has(item.title)
+  );
+
   const fitFilteredRegistry = window.windowFit === 'any'
-    ? activeRegistry
-    : activeRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
+    ? scheduledRegistry
+    : scheduledRegistry.filter(item => item.windowFit.includes(wantedFit) || item.windowFit.includes('Any'));
   const registryCandidates = fitFilteredRegistry.map(item => ({ title: item.title, class: item.class, source: 'registry', domain: item.domain }));
   const notionCandidates = notionResult.map(t => ({ title: t.title, class: 'Negotiable', source: 'notion', id: t.id }));
 

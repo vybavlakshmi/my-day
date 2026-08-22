@@ -16,7 +16,7 @@ Respond as her Paid Media Expert. If she's asking about ad strategy, give clear 
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 module.exports = { handle };

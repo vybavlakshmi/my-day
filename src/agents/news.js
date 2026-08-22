@@ -16,7 +16,7 @@ Respond as her News Aggregator. If she's asking for today's news, give a concise
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function brief() {

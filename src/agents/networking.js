@@ -16,7 +16,7 @@ Respond as her Networking Assistant. If she's telling you about a contact, log i
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 module.exports = { handle };

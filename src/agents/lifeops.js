@@ -14,7 +14,7 @@ Respond as her Life Ops Manager. If she's telling you about a personal admin tas
   return chat([
     { role: 'system', content: SYSTEM },
     { role: 'user', content: prompt },
-  ], { temperature: 0.6 });
+  ]);
 }
 
 async function brief() {
