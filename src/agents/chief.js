@@ -116,6 +116,7 @@ async function generateBrief() {
     weatherData,
     emailData,
     dayPlan,
+    openTasks,
   ] = await Promise.all([
     cadence.getFocusItems(),
     getQuickStatus(),
@@ -124,6 +125,7 @@ async function generateBrief() {
     weather.getCurrentWeather().catch(() => null),
     gmail.getUnreadEmails(15).catch(() => ({ needReply: [], readOnly: [] })),
     notion.getDayPlan().catch(() => null),
+    notion.getOpenTasks(5).catch(() => []),
   ]);
 
   const hour = parseInt(new Date().toLocaleTimeString('en-GB', {
@@ -214,7 +216,18 @@ async function generateBrief() {
     sections.push('');
   }
 
-  // 6. Monthly goal (from The Map)
+  // 6. Open tasks (from Notion)
+  if (openTasks.length > 0) {
+    const alreadyListed = new Set(priorities);
+    const uniqueOpen = openTasks.filter(t => !alreadyListed.has(t.title) && !priorities.some(p => p.includes(t.title)));
+    if (uniqueOpen.length > 0) {
+      sections.push(`*Open tasks:*`);
+      uniqueOpen.forEach(t => sections.push(`  • ${t.title}`));
+      sections.push('');
+    }
+  }
+
+  // 7. Monthly goal (from The Map)
   sections.push(`*Monthly goal:* ${getMonthlyGoal()}\n`);
 
   // 7. Today's Zoomed In tasks
@@ -256,23 +269,20 @@ async function generateBrief() {
 async function getZoomedInTasks(dayNum) {
   try {
     const entry = await notion.findZoomedInDayEntry(dayNum);
-    if (!entry) return [];
+    if (!entry || !entry.text) return [];
 
-    const { Client } = require('@notionhq/client');
-    const notionClient = new Client({ auth: process.env.NOTION_TOKEN });
-    const res = await notionClient.blocks.children.list({ block_id: entry.blockId });
+    // Format: "Day N — Weekday DD Mon — THINK: X. HANDS: Y. Z."
+    // Split on " — " and take everything after the date portion
+    const parts = entry.text.split(' — ');
+    // parts[0] = "Day N", parts[1] = "Sat 22 Aug", parts[2+] = task content
+    const taskContent = parts.slice(2).join(' — ').trim();
+    if (!taskContent) return [];
 
-    const tasks = [];
-    for (const block of res.results) {
-      if (block.type === 'to_do' && !block.to_do.checked) {
-        const text = (block.to_do.rich_text || []).map(t => t.plain_text).join('');
-        if (text) tasks.push(text);
-      }
-      if (block.type === 'bulleted_list_item') {
-        const text = (block.bulleted_list_item.rich_text || []).map(t => t.plain_text).join('');
-        if (text) tasks.push(text);
-      }
-    }
+    const tasks = taskContent
+      .split(/\.\s+/)
+      .map(t => t.replace(/\.$/, '').trim())
+      .filter(t => t.length > 2);
+
     return tasks;
   } catch {
     return [];
