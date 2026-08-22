@@ -188,16 +188,6 @@ app.get('/agent/brief', async (req, res) => {
   }
 });
 
-app.get('/debug/zoomed', async (req, res) => {
-  try {
-    const day = parseInt(req.query.day || '28');
-    const entry = await notion.findZoomedInDayEntry(day);
-    res.json({ day, found: !!entry, entry });
-  } catch (err) {
-    res.status(500).json({ error: err.message, stack: err.stack });
-  }
-});
-
 app.get('/brief/auto', async (req, res) => {
   try {
     const chatId = process.env.TELEGRAM_CHAT_ID;
