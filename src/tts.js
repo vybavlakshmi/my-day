@@ -2,7 +2,7 @@ const OpenAI = require('openai');
 
 const client = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
 
-async function textToSpeech(text, voice = 'coral') {
+async function textToSpeech(text, voice = 'nova') {
   const response = await client.audio.speech.create({
     model: 'gpt-4o-mini-tts',
     voice,
