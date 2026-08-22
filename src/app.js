@@ -196,15 +196,17 @@ app.get('/brief/auto', async (req, res) => {
     const brief = await chief.generateBrief();
     await telegram.sendMessage(chatId, brief);
 
+    let voiceOk = false;
     try {
       const plainBrief = tts.stripMarkdown(brief);
       const audioBuffer = await tts.textToSpeech(plainBrief);
-      await telegram.sendVoice(chatId, audioBuffer);
+      const voiceResult = await telegram.sendVoice(chatId, audioBuffer);
+      voiceOk = voiceResult && voiceResult.ok;
     } catch (ttsErr) {
       console.error('TTS failed, text brief still sent:', ttsErr.message);
     }
 
-    res.json({ ok: true, delivered: 'telegram+voice' });
+    res.json({ ok: true, delivered: voiceOk ? 'telegram+voice' : 'telegram-only', voiceError: voiceOk ? undefined : 'TTS or voice send failed' });
   } catch (err) {
     console.error('Auto brief error:', err.message);
     res.status(500).json({ error: err.message });
