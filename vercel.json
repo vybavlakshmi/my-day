@@ -15,7 +15,8 @@
     { "source": "/telegram/status", "destination": "/api/index" },
     { "source": "/agent/chat", "destination": "/api/index" },
     { "source": "/agent/brief", "destination": "/api/index" },
-    { "source": "/brief/auto", "destination": "/api/index" }
+    { "source": "/brief/auto", "destination": "/api/index" },
+    { "source": "/debug/zoomed", "destination": "/api/index" }
   ],
   "crons": [
     {
