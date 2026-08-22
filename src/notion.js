@@ -379,18 +379,29 @@ function extractBlockText(block) {
 }
 
 async function findZoomedInDayEntry(dayNumber) {
-  const dayPattern = `Day ${dayNumber}`;
-  async function walk(parentId) {
+  const prefix = `Day ${dayNumber} `;
+
+  async function walk(parentId, depth) {
     let cursor;
     do {
-      const res = await notion.blocks.children.list({ block_id: parentId, start_cursor: cursor });
+      const res = await notion.blocks.children.list({ block_id: parentId, start_cursor: cursor, page_size: 100 });
       for (const block of res.results) {
         const text = extractBlockText(block);
-        if (text && text.startsWith(`Day ${dayNumber} `)) {
+        if (text && text.startsWith(prefix)) {
           return { blockId: block.id, parentId, text };
         }
         if (block.has_children) {
-          const found = await walk(block.id);
+          // At page level (depth 0), only enter toggles that could contain our day
+          // July toggle has Days 1-11, August has Days 12-37, September has Days 38+
+          if (depth === 0 && text) {
+            const lower = text.toLowerCase();
+            if (lower.includes('instruction') || lower.includes('what this page')) continue;
+            if (dayNumber > 11 && lower.includes('july')) continue;
+            if (dayNumber <= 11 && lower.includes('august')) continue;
+            if (dayNumber <= 37 && lower.includes('september')) continue;
+            if (lower.includes('original block view')) continue;
+          }
+          const found = await walk(block.id, depth + 1);
           if (found) return found;
         }
       }
@@ -398,7 +409,7 @@ async function findZoomedInDayEntry(dayNumber) {
     } while (cursor);
     return null;
   }
-  return walk(ZOOMED_IN_PAGE_ID);
+  return walk(ZOOMED_IN_PAGE_ID, 0);
 }
 
 async function appendCarryForwardBlock(parentId, afterBlockId, taskName, fromDay) {

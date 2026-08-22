@@ -108,6 +108,8 @@ function getMonthlyGoal() {
 }
 
 async function generateBrief() {
+  const dayNum = getPhase1DayNumber();
+
   const [
     focus,
     status,
@@ -117,6 +119,7 @@ async function generateBrief() {
     emailData,
     dayPlan,
     openTasks,
+    zoomedIn,
   ] = await Promise.all([
     cadence.getFocusItems(),
     getQuickStatus(),
@@ -126,6 +129,7 @@ async function generateBrief() {
     gmail.getUnreadEmails(15).catch(() => ({ needReply: [], readOnly: [] })),
     notion.getDayPlan().catch(() => null),
     notion.getOpenTasks(5).catch(() => []),
+    getZoomedInTasks(dayNum),
   ]);
 
   const hour = parseInt(new Date().toLocaleTimeString('en-GB', {
@@ -135,7 +139,6 @@ async function generateBrief() {
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
   const dayName = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long' });
   const dateStr = new Date().toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'long' });
-  const dayNum = getPhase1DayNumber();
 
   const sections = [];
 
@@ -230,8 +233,7 @@ async function generateBrief() {
   // 7. Monthly goal (from The Map)
   sections.push(`*Monthly goal:* ${getMonthlyGoal()}\n`);
 
-  // 7. Today's Zoomed In tasks
-  const zoomedIn = await getZoomedInTasks(dayNum);
+  // 8. Today's Zoomed In tasks
   if (zoomedIn && zoomedIn.length > 0) {
     sections.push(`*From Zoomed In (Day ${dayNum}):*`);
     zoomedIn.forEach(t => sections.push(`  • ${t}`));
@@ -284,7 +286,8 @@ async function getZoomedInTasks(dayNum) {
       .filter(t => t.length > 2);
 
     return tasks;
-  } catch {
+  } catch (err) {
+    console.error('Zoomed In fetch failed:', err.message);
     return [];
   }
 }
