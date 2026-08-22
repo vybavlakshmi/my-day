@@ -129,6 +129,12 @@ app.post('/telegram/webhook', async (req, res) => {
     const msg = telegram.extractMessage(req.body);
     if (!msg || !msg.text) return res.json({ ok: true });
     if (msg.isCallback) await telegram.answerCallback(msg.callbackId);
+
+    if (msg.text.toLowerCase() === '/mychatid') {
+      await telegram.sendMessage(msg.chatId, `Your chat ID is: ${msg.chatId}`);
+      return res.json({ ok: true });
+    }
+
     const reply = await chief.handleMessage(msg.text);
     const text = typeof reply === 'string' ? reply : (reply.reply || JSON.stringify(reply));
     await telegram.sendMessage(msg.chatId, text);
